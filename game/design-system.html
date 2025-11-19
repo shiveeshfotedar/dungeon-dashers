@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dungeon Dashers - Design System</title>
+  <link rel="stylesheet" href="shared/theme.css">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-snap-type: y mandatory;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      overflow-x: hidden;
+    }
+
+    .slide {
+      min-height: 100vh;
+      padding: 80px 100px;
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      scroll-snap-align: start;
+      position: relative;
+    }
+
+    .slide::after {
+      content: '';
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 4px;
+      background: var(--border-soft);
+      border-radius: 2px;
+    }
+
+    .slide:last-of-type::after {
+      display: none;
+    }
+
+    /* Two-column slide layout */
+    .slide-two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+    }
+
+    .slide-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .slide-visual {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Section intro text */
+    .section-intro {
+      font-size: 1.1rem;
+      color: var(--color-muted);
+      max-width: 600px;
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    .design-header {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .design-header h1 {
+      font-family: var(--font-display);
+      font-size: 4.5rem;
+      margin: 0 0 24px;
+      background: linear-gradient(120deg, var(--primary-start), var(--primary-end));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .design-header p {
+      font-size: 1.3rem;
+      color: var(--color-muted);
+      margin: 0;
+    }
+
+    .design-header .subtitle {
+      margin-top: 40px;
+      font-size: 0.9rem;
+      color: var(--color-muted);
+      opacity: 0.6;
+    }
+
+    section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    h2 {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin: 0 0 40px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-soft);
+      flex-shrink: 0;
+    }
+
+    h3 {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--primary-end);
+      margin: 0 0 16px;
+    }
+
+    /* Color Swatches */
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 20px;
+    }
+
+    .color-swatch {
+      background: var(--surface-card);
+      border: 1px solid var(--border-soft);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .swatch-color {
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .swatch-info {
+      padding: 12px 16px;
+    }
+
+    .swatch-name {
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .swatch-value {
+      font-size: 0.75rem;
+      color: var(--color-muted);
+      font-family: monospace;
+    }
+
+    /* Typography */
+    .type-sample {
+      margin-bottom: 32px;
+      padding: 24px;
+      background: var(--surface-card);
+      border: 1px solid var(--border-soft);
+      border-radius: 12px;
+    }
+
+    .type-meta {
+      display: flex;
+      gap: 16px;
+      margin-top: 12px;
+      font-size: 0.75rem;
+      color: var(--color-muted);
+      font-family: monospace;
+    }
+
+    .type-display {
+      font-family: var(--font-display);
+    }
+
+    .type-body {
+      font-family: var(--font-body);
+    }
+
+    /* Card Types */
+    .card-type-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 24px;
+    }
+
+    .card-type-sample {
+      padding: 24px;
+      border-radius: 16px;
+      border: 2px solid;
+    }
+
+    .card-type-sample.attack {
+      background: linear-gradient(160deg, var(--card-attack-bg-start), var(--card-attack-bg-end));
+      border-color: var(--card-attack-border);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3), 0 0 20px var(--card-attack-glow);
+    }
+
+    .card-type-sample.defense {
+      background: linear-gradient(160deg, var(--card-defense-bg-start), var(--card-defense-bg-end));
+      border-color: var(--card-defense-border);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3), 0 0 20px var(--card-defense-glow);
+    }
+
+    .card-type-sample.skill {
+      background: linear-gradient(160deg, var(--card-skill-bg-start), var(--card-skill-bg-end));
+      border-color: var(--card-skill-border);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3), 0 0 20px var(--card-skill-glow);
+    }
+
+    .card-type-sample.utility {
+      background: linear-gradient(160deg, var(--card-utility-bg-start), var(--card-utility-bg-end));
+      border-color: var(--card-utility-border);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3), 0 0 20px var(--card-utility-glow);
+    }
+
+    .card-type-label {
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .card-type-sample.attack .card-type-label { color: var(--card-attack-accent); }
+    .card-type-sample.defense .card-type-label { color: var(--card-defense-accent); }
+    .card-type-sample.skill .card-type-label { color: var(--card-skill-accent); }
+    .card-type-sample.utility .card-type-label { color: var(--card-utility-accent); }
+
+    .card-type-vars {
+      font-size: 0.7rem;
+      font-family: monospace;
+      color: var(--color-muted);
+      line-height: 1.8;
+    }
+
+    /* Buttons */
+    .button-grid {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    /* Components */
+    .component-row {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+
+    /* Spacing */
+    .spacing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 16px;
+    }
+
+    .spacing-item {
+      text-align: center;
+    }
+
+    .spacing-visual {
+      background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+
+    .spacing-label {
+      font-size: 0.75rem;
+      color: var(--color-muted);
+      font-family: monospace;
+    }
+
+    /* Imagery */
+    .imagery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 24px;
+    }
+
+    .imagery-item {
+      background: var(--surface-card);
+      border: 1px solid var(--border-soft);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .imagery-preview {
+      height: 160px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.3);
+      padding: 16px;
+    }
+
+    .imagery-preview img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .imagery-info {
+      padding: 12px 16px;
+      font-size: 0.85rem;
+    }
+
+    .imagery-name {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .imagery-size {
+      font-size: 0.7rem;
+      color: var(--color-muted);
+      font-family: monospace;
+    }
+
+    /* Gradients */
+    .gradient-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .gradient-item {
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border-soft);
+    }
+
+    .gradient-preview {
+      height: 100px;
+    }
+
+    .gradient-info {
+      padding: 12px 16px;
+      background: var(--surface-card);
+    }
+
+    .gradient-name {
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .gradient-value {
+      font-size: 0.65rem;
+      color: var(--color-muted);
+      font-family: monospace;
+      word-break: break-all;
+    }
+
+    /* Borders */
+    .border-samples {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .border-sample {
+      width: 120px;
+      height: 80px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-family: monospace;
+      text-align: center;
+      background: var(--surface-card);
+    }
+
+    /* Layout Examples */
+    .layout-example {
+      background: var(--surface-card);
+      border: 1px solid var(--border-soft);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .layout-label {
+      font-size: 0.75rem;
+      color: var(--color-muted);
+      margin-bottom: 12px;
+      font-family: monospace;
+    }
+
+    .layout-demo {
+      display: flex;
+      gap: 12px;
+    }
+
+    .layout-box {
+      background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+      border-radius: 8px;
+      padding: 16px;
+      font-size: 0.8rem;
+      color: #090b12;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="slide">
+    <header class="design-header">
+      <h1>Dungeon Dashers</h1>
+      <p>Smart Phone Control TV Game</p>
+      <div style="margin-top: 60px; display: flex; gap: 24px;">
+        <div style="width: 12px; height: 12px; border-radius: 50%; background: var(--card-attack-border);"></div>
+        <div style="width: 12px; height: 12px; border-radius: 50%; background: var(--card-defense-border);"></div>
+        <div style="width: 12px; height: 12px; border-radius: 50%; background: var(--card-skill-border);"></div>
+        <div style="width: 12px; height: 12px; border-radius: 50%; background: var(--card-utility-border);"></div>
+      </div>
+      
+    </header>
+  </div>
+
+  <!-- Colors -->
+  <div class="slide">
+  <section>
+    <h2>Color Palette</h2>
+    <p class="section-intro">A dark, gothic palette with warm gold accents creates an immersive dungeon atmosphere while maintaining readability.</p>
+
+    <h3>Core Colors</h3>
+    <div class="color-grid">
+      <div class="color-swatch">
+        <div class="swatch-color" style="background: #efe7cf;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Text Primary</div>
+          <div class="swatch-value">--color-text: #efe7cf</div>
+        </div>
+      </div>
+      <div class="color-swatch">
+        <div class="swatch-color" style="background: rgba(252, 245, 226, 0.7);"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Text Muted</div>
+          <div class="swatch-value">--color-muted: rgba(252, 245, 226, 0.7)</div>
+        </div>
+      </div>
+      <div class="color-swatch">
+        <div class="swatch-color" style="background: linear-gradient(120deg, #c0943f, #f6d58b);"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Primary Gold</div>
+          <div class="swatch-value">--primary-start / --primary-end</div>
+        </div>
+      </div>
+      <div class="color-swatch">
+        <div class="swatch-color" style="background: rgba(197, 67, 67, 0.6);"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Danger</div>
+          <div class="swatch-value">--danger-border / --danger-bg</div>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="margin-top: 40px;">Surface Colors</h3>
+    <div class="color-grid">
+      <div class="color-swatch">
+        <div class="swatch-color" style="background: rgba(22, 15, 28, 0.92);"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Panel</div>
+          <div class="swatch-value">--surface-panel</div>
+        </div>
+      </div>
+      <div class="color-swatch">
+        <div class="swatch-color" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.1);"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Card</div>
+          <div class="swatch-value">--surface-card</div>
+        </div>
+      </div>
+      <div class="color-swatch">
+        <div class="swatch-color" style="background: rgba(255, 255, 255, 0.07);"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Ghost</div>
+          <div class="swatch-value">--ghost-bg</div>
+        </div>
+      </div>
+    </div>
+  </section>
+  </div>
+
+  <!-- Typography -->
+  <div class="slide">
+  <section>
+    <h2>Typography</h2>
+    <p class="section-intro">Two carefully paired serif fonts create a medieval fantasy aesthetic - ornate display type for headers and elegant body text for readability.</p>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
+    <div class="type-sample">
+      <div class="type-display" style="font-size: 2.5rem; font-weight: 700;">Cinzel Decorative</div>
+      <div class="type-meta">
+        <span>--font-display</span>
+        <span>Display / Headers</span>
+        <span>Weights: 400, 700, 900</span>
+      </div>
+    </div>
+
+    <div class="type-sample">
+      <div class="type-body" style="font-size: 1.5rem;">Cormorant Garamond</div>
+      <div class="type-body" style="font-size: 1rem; margin-top: 8px; color: var(--color-muted);">
+        The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs.
+      </div>
+      <div class="type-meta">
+        <span>--font-body</span>
+        <span>Body Text</span>
+        <span>Weights: 400, 600, 700</span>
+      </div>
+    </div>
+    </div>
+
+    <h3 style="margin-top: 32px;">Type Scale</h3>
+    <div class="type-sample">
+      <div class="type-display" style="font-size: 4rem; margin-bottom: 16px;">4rem - Overlay Title</div>
+      <div class="type-display" style="font-size: 2rem; margin-bottom: 16px;">2rem - Monster Name</div>
+      <div class="type-display" style="font-size: 1.5rem; margin-bottom: 16px;">1.5rem - Section Header</div>
+      <div class="type-body" style="font-size: 1.1rem; margin-bottom: 16px;">1.1rem - Body Large</div>
+      <div class="type-body" style="font-size: 1rem; margin-bottom: 16px;">1rem - Body Default</div>
+      <div class="type-body" style="font-size: 0.85rem; margin-bottom: 16px;">0.85rem - Body Small</div>
+      <div class="type-body" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em;">0.72rem - Tag / Chip</div>
+    </div>
+  </section>
+  </div>
+
+  <!-- Card Types -->
+  <div class="slide">
+  <section>
+    <h2>Card Type System</h2>
+    <p class="section-intro">Four distinct card types with MTG-inspired color coding help players quickly identify card functions during fast-paced gameplay.</p>
+    <div class="card-type-grid">
+      <div class="card-type-sample attack">
+        <div class="card-type-label">Attack</div>
+        <div class="card-type-vars">
+          --card-attack-border: #c74343<br>
+          --card-attack-glow: rgba(199, 67, 67, 0.7)<br>
+          --card-attack-accent: #ff7b7b
+        </div>
+      </div>
+      <div class="card-type-sample defense">
+        <div class="card-type-label">Defense</div>
+        <div class="card-type-vars">
+          --card-defense-border: #4a7ab8<br>
+          --card-defense-glow: rgba(74, 122, 184, 0.7)<br>
+          --card-defense-accent: #6ba3ff
+        </div>
+      </div>
+      <div class="card-type-sample skill">
+        <div class="card-type-label">Skill</div>
+        <div class="card-type-vars">
+          --card-skill-border: #52a352<br>
+          --card-skill-glow: rgba(82, 163, 82, 0.7)<br>
+          --card-skill-accent: #7bff7b
+        </div>
+      </div>
+      <div class="card-type-sample utility">
+        <div class="card-type-label">Utility</div>
+        <div class="card-type-vars">
+          --card-utility-border: #8b5ac7<br>
+          --card-utility-glow: rgba(139, 90, 199, 0.7)<br>
+          --card-utility-accent: #b58bff
+        </div>
+      </div>
+    </div>
+  </section>
+  </div>
+
+  <!-- Buttons -->
+  <div class="slide">
+  <section>
+    <h2>Button Styles</h2>
+    <p class="section-intro">Three button variants handle different interaction contexts - primary for main actions, ghost for secondary options, and danger for destructive actions.</p>
+
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; margin-top: 40px;">
+      <div style="text-align: center;">
+        <button class="primary-btn" style="width: 100%; padding: 16px;">Primary Button</button>
+        <p style="margin-top: 16px; font-size: 0.8rem; color: var(--color-muted);">Main actions<br>Start Battle, Confirm</p>
+      </div>
+      <div style="text-align: center;">
+        <button class="ghost-btn" style="width: 100%; padding: 16px;">Ghost Button</button>
+        <p style="margin-top: 16px; font-size: 0.8rem; color: var(--color-muted);">Secondary actions<br>Cancel, Back</p>
+      </div>
+      <div style="text-align: center;">
+        <button class="danger-btn" style="width: 100%; padding: 16px;">Danger Button</button>
+        <p style="margin-top: 16px; font-size: 0.8rem; color: var(--color-muted);">Destructive actions<br>Leave, Reset</p>
+      </div>
+    </div>
+
+    <div style="margin-top: 40px; padding: 20px; background: var(--surface-card); border: 1px solid var(--border-soft); border-radius: 12px;">
+      <div style="font-size: 0.75rem; color: var(--color-muted); font-family: monospace;">
+        padding: 10px 14px | border-radius: 12px | font-weight: 600 | transition: transform 100ms ease
+      </div>
+    </div>
+  </section>
+  </div>
+
+  <!-- Components -->
+  <div class="slide">
+  <section>
+    <h2>Components</h2>
+    <p class="section-intro">Small UI elements for labeling and identification throughout the interface.</p>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 60px; margin-top: 40px;">
+      <div>
+        <h3>Tags & Chips</h3>
+        <div class="component-row" style="margin-bottom: 24px;">
+          <span class="tag-chip">Attack</span>
+          <span class="tag-chip">Defense</span>
+          <span class="tag-chip">Skill</span>
+          <span class="tag-chip">Utility</span>
+        </div>
+        <div style="font-size: 0.75rem; color: var(--color-muted); font-family: monospace;">
+          Card type labels<br>
+          font-size: 0.72rem | letter-spacing: 0.1em
+        </div>
+      </div>
+      <div>
+        <h3>Player Pills</h3>
+        <div class="component-row" style="margin-bottom: 24px;">
+          <span class="pill" style="background: rgba(109,127,255,0.2); border-color: rgba(109,127,255,0.5);">Player 1</span>
+          <span class="pill" style="background: rgba(109,127,255,0.2); border-color: rgba(109,127,255,0.5);">Player 2</span>
+        </div>
+        <div style="font-size: 0.75rem; color: var(--color-muted); font-family: monospace;">
+          Player identification<br>
+          border-radius: 999px
+        </div>
+      </div>
+    </div>
+  </section>
+  </div>
+
+  <!-- Gradients -->
+  <div class="slide">
+  <section>
+    <h2>Gradients</h2>
+    <p class="section-intro">Radial and linear gradients create depth and atmosphere, reinforcing the dark fantasy theme.</p>
+    <div class="gradient-grid" style="margin-top: 40px;">
+      <div class="gradient-item">
+        <div class="gradient-preview" style="background: var(--gradient-bg);"></div>
+        <div class="gradient-info">
+          <div class="gradient-name">Background</div>
+          <div class="gradient-value">radial-gradient(circle at 20% -10%, #3c2b43 0%, #1b1228 45%, #09050f 100%)</div>
+        </div>
+      </div>
+      <div class="gradient-item">
+        <div class="gradient-preview" style="background: linear-gradient(120deg, var(--primary-start), var(--primary-end));"></div>
+        <div class="gradient-info">
+          <div class="gradient-name">Primary</div>
+          <div class="gradient-value">linear-gradient(120deg, #c0943f, #f6d58b)</div>
+        </div>
+      </div>
+      <div class="gradient-item">
+        <div class="gradient-preview" style="background: var(--accent-arch);"></div>
+        <div class="gradient-info">
+          <div class="gradient-name">Accent Arch</div>
+          <div class="gradient-value">radial-gradient(circle, rgba(246,213,139,0.28) 0%, transparent 65%)</div>
+        </div>
+      </div>
+    </div>
+  </section>
+  </div>
+
+  <!-- Borders -->
+  <div class="slide">
+  <section>
+    <h2>Borders</h2>
+    <div class="border-samples">
+      <div class="border-sample" style="border: 1px solid var(--border-soft);">
+        --border-soft<br>rgba(255, 215, 164, 0.12)
+      </div>
+      <div class="border-sample" style="border: 1px solid var(--border-muted);">
+        --border-muted<br>rgba(255, 215, 164, 0.28)
+      </div>
+      <div class="border-sample" style="border: 1px solid var(--ghost-border);">
+        --ghost-border<br>rgba(255, 255, 255, 0.18)
+      </div>
+    </div>
+  </section>
+  </div>
+
+  <!-- Spacing -->
+  <div class="slide">
+  <section>
+    <h2>Spacing Scale</h2>
+    <div class="spacing-grid">
+      <div class="spacing-item">
+        <div class="spacing-visual" style="height: 4px;"></div>
+        <div class="spacing-label">4px</div>
+      </div>
+      <div class="spacing-item">
+        <div class="spacing-visual" style="height: 8px;"></div>
+        <div class="spacing-label">8px</div>
+      </div>
+      <div class="spacing-item">
+        <div class="spacing-visual" style="height: 12px;"></div>
+        <div class="spacing-label">12px</div>
+      </div>
+      <div class="spacing-item">
+        <div class="spacing-visual" style="height: 16px;"></div>
+        <div class="spacing-label">16px</div>
+      </div>
+      <div class="spacing-item">
+        <div class="spacing-visual" style="height: 24px;"></div>
+        <div class="spacing-label">24px</div>
+      </div>
+      <div class="spacing-item">
+        <div class="spacing-visual" style="height: 32px;"></div>
+        <div class="spacing-label">32px</div>
+      </div>
+      <div class="spacing-item">
+        <div class="spacing-visual" style="height: 40px;"></div>
+        <div class="spacing-label">40px</div>
+      </div>
+      <div class="spacing-item">
+        <div class="spacing-visual" style="height: 60px;"></div>
+        <div class="spacing-label">60px</div>
+      </div>
+    </div>
+  </section>
+  </div>
+
+  <!-- Border Radius -->
+  <div class="slide">
+  <section>
+    <h2>Border Radius</h2>
+    <div class="component-row">
+      <div style="width: 60px; height: 60px; background: linear-gradient(135deg, var(--primary-start), var(--primary-end)); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: #090b12; font-weight: 600;">6px</div>
+      <div style="width: 60px; height: 60px; background: linear-gradient(135deg, var(--primary-start), var(--primary-end)); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: #090b12; font-weight: 600;">12px</div>
+      <div style="width: 60px; height: 60px; background: linear-gradient(135deg, var(--primary-start), var(--primary-end)); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: #090b12; font-weight: 600;">16px</div>
+      <div style="width: 60px; height: 60px; background: linear-gradient(135deg, var(--primary-start), var(--primary-end)); border-radius: 24px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: #090b12; font-weight: 600;">24px</div>
+      <div style="width: 60px; height: 60px; background: linear-gradient(135deg, var(--primary-start), var(--primary-end)); border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: #090b12; font-weight: 600;">999px</div>
+    </div>
+  </section>
+  </div>
+
+  <!-- Imagery -->
+  <div class="slide">
+  <section>
+    <h2>Imagery</h2>
+    <p class="section-intro">Character and card artwork brings the dungeon world to life with a consistent dark fantasy art style.</p>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 32px;">
+    <div>
+    <h3>Monster Assets (5 total)</h3>
+    <div class="imagery-grid" style="grid-template-columns: repeat(3, 1fr);">
+      <div class="imagery-item">
+        <div class="imagery-preview">
+          <img src="assets/monsters/goblin_pack.png" alt="Goblin Pack">
+        </div>
+        <div class="imagery-info">
+          <div class="imagery-name">Goblin Pack</div>
+          <div class="imagery-size">Fight 1/5</div>
+        </div>
+      </div>
+      <div class="imagery-item">
+        <div class="imagery-preview">
+          <img src="assets/monsters/Shield_Troll.png" alt="Shield Troll">
+        </div>
+        <div class="imagery-info">
+          <div class="imagery-name">Shield Troll</div>
+          <div class="imagery-size">Fight 2/5</div>
+        </div>
+      </div>
+      <div class="imagery-item">
+        <div class="imagery-preview">
+          <img src="assets/monsters/Rune_Sentinel.png" alt="Rune Sentinel">
+        </div>
+        <div class="imagery-info">
+          <div class="imagery-name">Rune Sentinel</div>
+          <div class="imagery-size">Fight 3/5</div>
+        </div>
+      </div>
+      <div class="imagery-item">
+        <div class="imagery-preview">
+          <img src="assets/monsters/Ogre_Captain.png" alt="Ogre Captain">
+        </div>
+        <div class="imagery-info">
+          <div class="imagery-name">Ogre Captain</div>
+          <div class="imagery-size">Fight 4/5</div>
+        </div>
+      </div>
+      <div class="imagery-item">
+        <div class="imagery-preview">
+          <img src="assets/monsters/Dragon_Warden_(boss).png" alt="Dragon Warden">
+        </div>
+        <div class="imagery-info">
+          <div class="imagery-name">Dragon Warden</div>
+          <div class="imagery-size">Boss - Fight 5/5</div>
+        </div>
+      </div>
+    </div>
+    </div>
+
+    <div>
+    <h3>Card Assets (22 total)</h3>
+    <div class="imagery-grid" style="grid-template-columns: repeat(2, 1fr);">
+      <div class="imagery-item">
+        <div class="imagery-preview" style="background: linear-gradient(160deg, var(--card-attack-bg-start), var(--card-attack-bg-end));">
+          <img src="assets/cards/strike.png" alt="Strike">
+        </div>
+        <div class="imagery-info">
+          <div class="imagery-name">Strike</div>
+          <div class="imagery-size">Attack Card</div>
+        </div>
+      </div>
+      <div class="imagery-item">
+        <div class="imagery-preview" style="background: linear-gradient(160deg, var(--card-defense-bg-start), var(--card-defense-bg-end));">
+          <img src="assets/cards/shield.png" alt="Shield">
+        </div>
+        <div class="imagery-info">
+          <div class="imagery-name">Shield</div>
+          <div class="imagery-size">Defense Card</div>
+        </div>
+      </div>
+      <div class="imagery-item">
+        <div class="imagery-preview" style="background: linear-gradient(160deg, var(--card-skill-bg-start), var(--card-skill-bg-end));">
+          <img src="assets/cards/heal.png" alt="Heal">
+        </div>
+        <div class="imagery-info">
+          <div class="imagery-name">Heal</div>
+          <div class="imagery-size">Skill Card</div>
+        </div>
+      </div>
+      <div class="imagery-item">
+        <div class="imagery-preview" style="background: linear-gradient(160deg, var(--card-utility-bg-start), var(--card-utility-bg-end));">
+          <img src="assets/cards/freeze.png" alt="Freeze">
+        </div>
+        <div class="imagery-info">
+          <div class="imagery-name">Freeze</div>
+          <div class="imagery-size">Utility Card</div>
+        </div>
+      </div>
+    </div>
+    </div>
+    </div>
+  </section>
+  </div>
+
+  <!-- Layout -->
+  <div class="slide">
+  <section>
+    <h2>Layout Structure</h2>
+    <p class="section-intro">Two distinct interfaces - a TV display for shared viewing and phone controllers for individual players.</p>
+
+    <div style="display: grid; grid-template-columns: 1fr 300px; gap: 40px; align-items: start;">
+
+      <!-- TV Wireframe -->
+      <div>
+        <div class="layout-label" style="margin-bottom: 16px;">TV (Receiver) - 16:9 Aspect Ratio</div>
+        <div style="
+          aspect-ratio: 16/9;
+          background: rgba(0,0,0,0.4);
+          border: 2px dashed var(--border-muted);
+          border-radius: 8px;
+          padding: 12px;
+          display: grid;
+          grid-template-columns: 180px 1fr 180px;
+          grid-template-rows: auto 1fr auto;
+          gap: 8px;
+        ">
+          <!-- Header Row -->
+          <div style="
+            grid-column: 1 / -1;
+            height: 40px;
+            border: 1px dashed var(--border-soft);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 12px;
+            font-size: 0.65rem;
+            color: var(--color-muted);
+          ">
+            <span>Room Code</span>
+            <span>Monster HP Bar</span>
+            <span>Party HP Bar</span>
+          </div>
+
+          <!-- Left Sidebar -->
+          <div style="
+            border: 1px dashed var(--border-soft);
+            border-radius: 4px;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+          ">
+            <div style="font-size: 0.6rem; color: var(--color-muted); text-align: center; padding: 4px; border-bottom: 1px dashed var(--border-soft);">Sidebar</div>
+            <div style="flex: 1; border: 1px dashed rgba(255,255,255,0.1); border-radius: 4px; padding: 6px; font-size: 0.55rem; color: var(--color-muted);">Players List</div>
+            <div style="flex: 1; border: 1px dashed rgba(255,255,255,0.1); border-radius: 4px; padding: 6px; font-size: 0.55rem; color: var(--color-muted);">Action Log</div>
+          </div>
+
+          <!-- Main Battle Area -->
+          <div style="
+            border: 1px dashed var(--primary-start);
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px;
+          ">
+            <div style="
+              width: 70%;
+              aspect-ratio: 1;
+              border: 2px dashed var(--border-muted);
+              border-radius: 8px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 0.6rem;
+              color: var(--color-muted);
+            ">Monster Image</div>
+            <div style="font-size: 0.6rem; color: var(--color-muted);">Monster Name</div>
+          </div>
+
+          <!-- Right Sidebar -->
+          <div style="
+            border: 1px dashed var(--border-soft);
+            border-radius: 4px;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+          ">
+            <div style="font-size: 0.6rem; color: var(--color-muted); text-align: center; padding: 4px; border-bottom: 1px dashed var(--border-soft);">Stats</div>
+            <div style="flex: 1; border: 1px dashed rgba(255,255,255,0.1); border-radius: 4px; padding: 6px; font-size: 0.55rem; color: var(--color-muted);">Phase Banner</div>
+            <div style="flex: 1; border: 1px dashed rgba(255,255,255,0.1); border-radius: 4px; padding: 6px; font-size: 0.55rem; color: var(--color-muted);">Rage Meter</div>
+          </div>
+
+          <!-- Bottom Cards Area -->
+          <div style="
+            grid-column: 1 / -1;
+            height: 60px;
+            border: 1px dashed var(--border-soft);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 8px;
+          ">
+            <div style="width: 35px; height: 45px; border: 1px dashed var(--card-attack-border); border-radius: 3px;"></div>
+            <div style="width: 35px; height: 45px; border: 1px dashed var(--card-defense-border); border-radius: 3px;"></div>
+            <div style="width: 35px; height: 45px; border: 1px dashed var(--card-skill-border); border-radius: 3px;"></div>
+            <div style="font-size: 0.55rem; color: var(--color-muted); margin-left: 8px;">Played Cards</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phone Wireframe -->
+      <div>
+        <div class="layout-label" style="margin-bottom: 16px;">Phone (Controller) - 9:19.5 Aspect Ratio</div>
+        <div style="
+          aspect-ratio: 9/19.5;
+          max-height: 500px;
+          background: rgba(0,0,0,0.4);
+          border: 2px dashed var(--border-muted);
+          border-radius: 24px;
+          padding: 16px 10px;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        ">
+          <!-- Top Bar -->
+          <div style="
+            height: 50px;
+            border: 1px dashed var(--border-soft);
+            border-radius: 8px;
+            padding: 6px;
+            display: flex;
+            gap: 6px;
+          ">
+            <div style="flex: 1; border: 1px dashed rgba(255,255,255,0.1); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.5rem; color: var(--color-muted);">Party HP</div>
+            <div style="flex: 1; border: 1px dashed rgba(255,255,255,0.1); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.5rem; color: var(--color-muted);">Status</div>
+          </div>
+
+          <!-- Hand Area (Main) -->
+          <div style="
+            flex: 1;
+            border: 1px dashed var(--primary-start);
+            border-radius: 8px;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+          ">
+            <div style="font-size: 0.55rem; color: var(--color-muted);">Your Hand</div>
+            <div style="
+              flex: 1;
+              display: flex;
+              gap: 6px;
+              overflow: hidden;
+              align-items: center;
+            ">
+              <!-- Card placeholders -->
+              <div style="
+                flex: 0 0 60px;
+                height: 90%;
+                border: 1px dashed var(--card-attack-border);
+                border-radius: 6px;
+                display: flex;
+                flex-direction: column;
+                padding: 4px;
+                gap: 3px;
+              ">
+                <div style="height: 8px; border: 1px dashed rgba(255,255,255,0.1); border-radius: 2px;"></div>
+                <div style="flex: 1; border: 1px dashed rgba(255,255,255,0.1); border-radius: 3px;"></div>
+                <div style="height: 12px; border: 1px dashed rgba(255,255,255,0.1); border-radius: 2px;"></div>
+              </div>
+              <div style="
+                flex: 0 0 60px;
+                height: 90%;
+                border: 1px dashed var(--card-defense-border);
+                border-radius: 6px;
+                display: flex;
+                flex-direction: column;
+                padding: 4px;
+                gap: 3px;
+              ">
+                <div style="height: 8px; border: 1px dashed rgba(255,255,255,0.1); border-radius: 2px;"></div>
+                <div style="flex: 1; border: 1px dashed rgba(255,255,255,0.1); border-radius: 3px;"></div>
+                <div style="height: 12px; border: 1px dashed rgba(255,255,255,0.1); border-radius: 2px;"></div>
+              </div>
+              <div style="
+                flex: 0 0 60px;
+                height: 90%;
+                border: 1px dashed var(--card-skill-border);
+                border-radius: 6px;
+                display: flex;
+                flex-direction: column;
+                padding: 4px;
+                gap: 3px;
+              ">
+                <div style="height: 8px; border: 1px dashed rgba(255,255,255,0.1); border-radius: 2px;"></div>
+                <div style="flex: 1; border: 1px dashed rgba(255,255,255,0.1); border-radius: 3px;"></div>
+                <div style="height: 12px; border: 1px dashed rgba(255,255,255,0.1); border-radius: 2px;"></div>
+              </div>
+            </div>
+            <div style="font-size: 0.5rem; color: var(--color-muted); text-align: center;">Horizontal Scroll</div>
+          </div>
+
+          <!-- Bottom Safe Area -->
+          <div style="
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          ">
+            <div style="width: 80px; height: 4px; background: var(--border-soft); border-radius: 2px;"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+  </div>
+
+  <!-- Animation -->
+  <div class="slide">
+  <section>
+    <h2>Animation & Effects</h2>
+    <p class="section-intro">Subtle animations provide feedback and enhance the tactile feel of interactions.</p>
+
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; margin-top: 40px;">
+      <div style="padding: 32px; background: var(--surface-card); border: 1px solid var(--border-soft); border-radius: 16px;">
+        <div style="font-family: var(--font-display); font-size: 1.1rem; margin-bottom: 16px; color: var(--primary-end);">Transitions</div>
+        <div style="font-size: 0.8rem; color: var(--color-muted); font-family: monospace; line-height: 2;">
+          transform 100ms ease<br>
+          all 200ms ease<br>
+          all 300ms ease
+        </div>
+        <div style="margin-top: 16px; font-size: 0.75rem; color: var(--color-muted);">
+          Button presses, card focus, UI state changes
+        </div>
+      </div>
+      <div style="padding: 32px; background: var(--surface-card); border: 1px solid var(--border-soft); border-radius: 16px;">
+        <div style="font-family: var(--font-display); font-size: 1.1rem; margin-bottom: 16px; color: var(--primary-end);">Glow Effects</div>
+        <div style="font-size: 0.8rem; color: var(--color-muted); font-family: monospace; line-height: 2;">
+          box-shadow: 0 0 50px 15px<br>
+          animation: 0.8s ease-out
+        </div>
+        <div style="margin-top: 16px; font-size: 0.75rem; color: var(--color-muted);">
+          Card impact on monster, card type indicators
+        </div>
+      </div>
+      <div style="padding: 32px; background: var(--surface-card); border: 1px solid var(--border-soft); border-radius: 16px;">
+        <div style="font-family: var(--font-display); font-size: 1.1rem; margin-bottom: 16px; color: var(--primary-end);">Hover States</div>
+        <div style="font-size: 0.8rem; color: var(--color-muted); font-family: monospace; line-height: 2;">
+          translateY(-2px)<br>
+          box-shadow: 0 8px 15px
+        </div>
+        <div style="margin-top: 16px; font-size: 0.75rem; color: var(--color-muted);">
+          Button hover lift, card selection
+        </div>
+      </div>
+    </div>
+  </section>
+  </div>
+
+</body>
+</html>

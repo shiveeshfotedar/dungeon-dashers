@@ -1,0 +1,22 @@
+{
+  "attack": [
+    { "id": "strike", "name": "Strike", "attack": 4 },
+    { "id": "firebolt", "name": "Fire Bolt", "attack": "4-10" },
+    { "id": "multi_hit", "name": "Multi Hit", "attack": "2x3" }
+  ],
+  "defense": [
+    { "id": "shield", "name": "Shield", "defense": 6 },
+    { "id": "barrier", "name": "Barrier", "barrier": true },
+    { "id": "dodge", "name": "Dodge", "dodge": 0.5 }
+  ],
+  "skill": [
+    { "id": "heal", "name": "Heal", "heal": 4 },
+    { "id": "boost", "name": "Boost", "boost": 0.5 },
+    { "id": "focus", "name": "Focus", "rageDown": 20 }
+  ],
+  "utility": [
+    { "id": "trap", "name": "Trap", "trap": true },
+    { "id": "freeze", "name": "Freeze", "freeze": true },
+    { "id": "reveal_weakness", "name": "Reveal Weakness", "revealWeakness": true }
+  ]
+}

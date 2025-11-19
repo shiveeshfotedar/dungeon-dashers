@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Game Table</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cormorant+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../shared/theme.css">
+  <style>
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+    body::before {
+      content: "";
+      position: absolute;
+      inset: -30%;
+      background: url("https://www.transparenttextures.com/patterns/concrete-wall.png");
+      opacity: 0.25;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Immersive Battle Layout */
+    .board {
+      width: 100%;
+      height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr minmax(240px, auto); /* Cards area gets min 240px */
+      grid-template-columns: 1fr 350px;
+      grid-template-areas:
+        "header header"
+        "battle sidebar"
+        "cards sidebar";
+      position: relative;
+      z-index: 1;
+    }
+    /* Header Area - HP Bars & Status */
+    .header-area {
+      grid-area: header;
+      padding: 20px 32px;
+      background: linear-gradient(180deg, rgba(0,0,0,0.6), transparent);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border-soft);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .header-info h1 {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 1.8rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    .status {
+      margin: 4px 0 0;
+      font-size: 0.95rem;
+      color: #8de0ff;
+    }
+
+    /* Monster Battle Area - Center Stage */
+    .battle-area {
+      grid-area: battle;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 40px; /* Reduced vertical padding to save space */
+      background: radial-gradient(ellipse at center, rgba(0,0,0,0.2), rgba(0,0,0,0.6));
+      max-height: calc(100vh - 140px - 240px); /* Account for header + cards area */
+    }
+
+    .monster-display {
+      width: 100%;
+      max-width: 600px;
+      aspect-ratio: 4/3;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(145deg, rgba(30,20,40,0.8), rgba(10,5,15,0.9));
+      border: 3px solid var(--border-soft);
+      border-radius: 24px;
+      box-shadow:
+        0 20px 60px rgba(0,0,0,0.8),
+        inset 0 0 60px rgba(0,0,0,0.5);
+      overflow: hidden;
+    }
+
+    .monster-display::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.05), transparent 70%);
+      pointer-events: none;
+    }
+
+    .monster-placeholder {
+      width: 80%;
+      height: 80%;
+      background: linear-gradient(135deg, rgba(139, 90, 199, 0.2), rgba(199, 67, 67, 0.2));
+      border: 2px dashed rgba(255,255,255,0.2);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      color: rgba(255,255,255,0.3);
+      letter-spacing: 0.1em;
+      transition: all 0.3s ease;
+      overflow: hidden;
+    }
+
+    .monster-placeholder img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Card Impact Glow Effects */
+    .monster-placeholder.glow-attack {
+      animation: glowAttack 0.8s ease-out;
+    }
+
+    .monster-placeholder.glow-defense {
+      animation: glowDefense 0.8s ease-out;
+    }
+
+    .monster-placeholder.glow-skill {
+      animation: glowSkill 0.8s ease-out;
+    }
+
+    .monster-placeholder.glow-utility {
+      animation: glowUtility 0.8s ease-out;
+    }
+
+    @keyframes glowAttack {
+      0% {
+        border-color: var(--card-attack-border);
+        box-shadow: 0 0 0 0 var(--card-attack-glow);
+      }
+      50% {
+        border-color: var(--card-attack-border);
+        box-shadow: 0 0 50px 15px var(--card-attack-glow);
+      }
+      100% {
+        border-color: rgba(255,255,255,0.2);
+        box-shadow: 0 0 0 0 var(--card-attack-glow);
+      }
+    }
+
+    @keyframes glowDefense {
+      0% {
+        border-color: var(--card-defense-border);
+        box-shadow: 0 0 0 0 var(--card-defense-glow);
+      }
+      50% {
+        border-color: var(--card-defense-border);
+        box-shadow: 0 0 50px 15px var(--card-defense-glow);
+      }
+      100% {
+        border-color: rgba(255,255,255,0.2);
+        box-shadow: 0 0 0 0 var(--card-defense-glow);
+      }
+    }
+
+    @keyframes glowSkill {
+      0% {
+        border-color: var(--card-skill-border);
+        box-shadow: 0 0 0 0 var(--card-skill-glow);
+      }
+      50% {
+        border-color: var(--card-skill-border);
+        box-shadow: 0 0 50px 15px var(--card-skill-glow);
+      }
+      100% {
+        border-color: rgba(255,255,255,0.2);
+        box-shadow: 0 0 0 0 var(--card-skill-glow);
+      }
+    }
+
+    @keyframes glowUtility {
+      0% {
+        border-color: var(--card-utility-border);
+        box-shadow: 0 0 0 0 var(--card-utility-glow);
+      }
+      50% {
+        border-color: var(--card-utility-border);
+        box-shadow: 0 0 50px 15px var(--card-utility-glow);
+      }
+      100% {
+        border-color: rgba(255,255,255,0.2);
+        box-shadow: 0 0 0 0 var(--card-utility-glow);
+      }
+    }
+
+    .monster-name {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--color-text);
+      text-shadow: 0 4px 12px rgba(0,0,0,0.8);
+      padding: 12px 32px;
+      background: rgba(0,0,0,0.6);
+      border: 2px solid var(--border-soft);
+      border-radius: 12px;
+      backdrop-filter: blur(8px);
+    }
+
+    /* Start Battle Button */
+    .start-battle-btn {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: var(--font-display);
+      font-size: 1.8rem;
+      font-weight: 700;
+      padding: 20px 48px;
+      background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+      color: #1a0f08;
+      border: 3px solid var(--primary-end);
+      border-radius: 16px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6), 0 0 40px rgba(246,213,139,0.4);
+      transition: all 300ms ease;
+      animation: pulse-glow 2s infinite;
+    }
+
+    .start-battle-btn:hover {
+      transform: translate(-50%, -50%) scale(1.05);
+      box-shadow: 0 15px 40px rgba(0,0,0,0.8), 0 0 60px rgba(246,213,139,0.6);
+    }
+
+    .start-battle-btn:active {
+      transform: translate(-50%, -50%) scale(0.98);
+    }
+
+    @keyframes pulse-glow {
+      0%, 100% {
+        box-shadow: 0 10px 30px rgba(0,0,0,0.6), 0 0 40px rgba(246,213,139,0.4);
+      }
+      50% {
+        box-shadow: 0 10px 30px rgba(0,0,0,0.6), 0 0 60px rgba(246,213,139,0.7);
+      }
+    }
+
+    /* Active Cards Display Area */
+    .cards-area {
+      grid-area: cards;
+      padding: 16px 32px;
+      background: linear-gradient(0deg, rgba(0,0,0,0.6), transparent);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid var(--border-soft);
+      overflow-x: auto;
+      overflow-y: hidden;
+      display: flex;
+      align-items: center; /* Center cards vertically */
+    }
+
+    .cards-container {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      min-height: 200px; /* Matches played-card height */
+      padding: 8px 0;
+      width: 100%;
+    }
+
+    /* Sidebar - Players & Action Log */
+    .sidebar {
+      grid-area: sidebar;
+      background: rgba(0,0,0,0.7);
+      border-left: 1px solid var(--border-soft);
+      backdrop-filter: blur(20px);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .panel {
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      padding: 24px;
+      box-shadow: none;
+      border-bottom: 1px solid var(--border-soft);
+    }
+
+    .panel:last-child {
+      flex: 1;
+      border-bottom: none;
+      overflow: hidden;
+    }
+
+    h2 {
+      margin: 0 0 16px;
+      color: var(--color-muted);
+      font-size: 0.9rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      font-family: var(--font-display);
+    }
+    /* HP Bars in Header */
+    .hp-bars {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      flex: 1;
+      max-width: 600px;
+    }
+
+    .pill-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .pill {
+      background: var(--ghost-bg);
+      border-color: var(--ghost-border);
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      border: 1px solid var(--ghost-border);
+    }
+
+    .log {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,0.2) transparent;
+    }
+
+    .log::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .log::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.2);
+      border-radius: 999px;
+    }
+
+    .log li {
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .log time {
+      display: block;
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+      color: #7d86c7;
+      margin-top: 4px;
+    }
+    .bar {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border-soft);
+      border-radius: 14px;
+      padding: 8px 10px;
+    }
+    .bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.95rem;
+      color: var(--color-muted);
+      margin-bottom: 6px;
+    }
+    .bar-track {
+      width: 100%;
+      height: 12px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary-start), var(--primary-end));
+      width: 100%;
+    }
+    .phase-banner {
+      padding: 10px 16px;
+      border: 1px solid var(--border-soft);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.05);
+      display: inline-flex;
+      gap: 10px;
+      align-items: center;
+      font-weight: 700;
+      font-size: 0.9rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .phase-banner.attack {
+      background: rgba(0, 180, 120, 0.15);
+      border-color: rgba(0, 180, 120, 0.4);
+      color: #7cf0c2;
+    }
+    .phase-banner.boss {
+      background: rgba(200, 70, 70, 0.18);
+      border-color: rgba(200, 70, 70, 0.5);
+      color: #ff9b9b;
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(200,70,70,0.6); }
+      70% { box-shadow: 0 0 0 12px rgba(200,70,70,0); }
+      100% { box-shadow: 0 0 0 0 rgba(200,70,70,0); }
+    }
+
+    /* Game Over Overlays */
+    .game-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.95);
+      backdrop-filter: blur(20px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .game-overlay[hidden] {
+      display: none;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .overlay-content {
+      text-align: center;
+      max-width: 600px;
+      padding: 40px;
+      background: var(--surface-panel);
+      border: 2px solid var(--border-soft);
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+    }
+
+    .overlay-title {
+      font-family: var(--font-display);
+      font-size: 4rem;
+      margin: 0 0 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      animation: titlePulse 2s infinite;
+    }
+
+    @keyframes titlePulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    .victory-title {
+      color: #7bff7b;
+      text-shadow: 0 0 40px rgba(123,255,123,0.6);
+    }
+
+    .defeat-title {
+      color: #ff7b7b;
+      text-shadow: 0 0 40px rgba(255,123,123,0.6);
+    }
+
+    .final-victory-title {
+      color: var(--primary-end);
+      text-shadow: 0 0 40px rgba(246,213,139,0.8);
+    }
+
+    .overlay-subtitle {
+      font-size: 1.3rem;
+      color: var(--color-muted);
+      margin-bottom: 30px;
+    }
+
+    .reward-card-display {
+      margin: 30px 0;
+      padding: 30px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 16px;
+      border: 1px solid var(--border-soft);
+    }
+
+    .reward-card-display h2 {
+      color: var(--primary-end);
+      margin-bottom: 20px;
+      font-family: var(--font-display);
+    }
+
+    .reward-card {
+      background: linear-gradient(160deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+      padding: 20px;
+      border-radius: 12px;
+      border: 2px solid var(--primary-start);
+      box-shadow: 0 0 30px rgba(192,148,63,0.4);
+      display: inline-block;
+      min-width: 280px;
+    }
+
+    .reward-card-name {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      color: var(--primary-end);
+      margin-bottom: 10px;
+    }
+
+    .reward-card-desc {
+      font-size: 1.1rem;
+      color: var(--color-text);
+      line-height: 1.5;
+    }
+
+    .overlay-message {
+      font-size: 1.1rem;
+      color: var(--color-muted);
+      margin-top: 20px;
+    }
+
+    .overlay-hint {
+      font-size: 1rem;
+      color: var(--color-muted);
+      margin-top: 30px;
+      animation: pulse 2s infinite;
+    }
+
+    .overlay-hint kbd {
+      display: inline-block;
+      padding: 8px 12px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+      color: #090b12;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
+    .defeat-stats, .victory-stats {
+      margin: 30px 0;
+      font-size: 1.2rem;
+    }
+
+    .defeat-stats p, .victory-stats p {
+      margin: 15px 0;
+    }
+
+    /* Played Card Display (MTG-Style Cards) */
+    .played-card {
+      width: 140px;
+      height: 200px;
+      flex-shrink: 0;
+      background: linear-gradient(160deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+      border-radius: 12px;
+      border: 2px solid var(--border-soft);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+      animation: cardSlideIn 400ms ease-out;
+    }
+
+    @keyframes cardSlideIn {
+      from {
+        transform: translateY(40px) scale(0.8);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+      }
+    }
+
+    /* Card type colors */
+    .played-card.card-type-attack {
+      background: linear-gradient(160deg, var(--card-attack-bg-start), var(--card-attack-bg-end));
+      border-color: var(--card-attack-border);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4), 0 0 15px var(--card-attack-glow);
+    }
+
+    .played-card.card-type-defense {
+      background: linear-gradient(160deg, var(--card-defense-bg-start), var(--card-defense-bg-end));
+      border-color: var(--card-defense-border);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4), 0 0 15px var(--card-defense-glow);
+    }
+
+    .played-card.card-type-skill {
+      background: linear-gradient(160deg, var(--card-skill-bg-start), var(--card-skill-bg-end));
+      border-color: var(--card-skill-border);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4), 0 0 15px var(--card-skill-glow);
+    }
+
+    .played-card.card-type-utility {
+      background: linear-gradient(160deg, var(--card-utility-bg-start), var(--card-utility-bg-end));
+      border-color: var(--card-utility-border);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4), 0 0 15px var(--card-utility-glow);
+    }
+
+    .played-card-header {
+      font-family: var(--font-display);
+      font-size: 0.9rem;
+      font-weight: 700;
+      text-align: center;
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .played-card.card-type-attack .played-card-header {
+      color: var(--card-attack-accent);
+    }
+
+    .played-card.card-type-defense .played-card-header {
+      color: var(--card-defense-accent);
+    }
+
+    .played-card.card-type-skill .played-card-header {
+      color: var(--card-skill-accent);
+    }
+
+    .played-card.card-type-utility .played-card-header {
+      color: var(--card-utility-accent);
+    }
+
+    .played-card-player {
+      font-size: 0.75rem;
+      color: var(--color-muted);
+      text-align: center;
+      opacity: 0.8;
+    }
+
+    .played-card-art {
+      flex: 1;
+      border-radius: 8px;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.08), rgba(0,0,0,0.3));
+      border: 1px solid rgba(255,255,255,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .played-card-art img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="board">
+    <!-- Header: Room Info & HP Bars -->
+    <header class="header-area">
+      <div class="header-info">
+        <h1>Room <span id="roomCode">ABCD</span> <span id="fightProgress" style="font-size:0.6em; color: var(--color-muted);"></span></h1>
+        <p class="status" id="status">Waiting for players...</p>
+        <div class="phase-banner" id="phaseBanner" hidden>Prepare your card</div>
+      </div>
+      <div class="hp-bars">
+        <div class="bar">
+          <div class="bar-label"><span>Monster HP</span><span id="monsterHpLabel">—</span></div>
+          <div class="bar-track"><div class="bar-fill" id="monsterHpBar" style="width:0%"></div></div>
+        </div>
+        <div class="bar">
+          <div class="bar-label"><span>Party HP</span><span id="partyHpLabel">100</span></div>
+          <div class="bar-track"><div class="bar-fill" id="partyHpBar" style="width:100%"></div></div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Center: Monster Display (Immersive View) -->
+    <main class="battle-area">
+      <div class="monster-display">
+        <div class="monster-placeholder">
+          <img id="monsterImage" src="" alt="Monster" hidden>
+        </div>
+        <div class="monster-name" id="monsterName">Waiting for Battle...</div>
+        <button class="start-battle-btn" id="startBattleBtn" hidden>
+          Start Battle
+        </button>
+      </div>
+    </main>
+
+    <!-- Bottom: Active Cards Being Played -->
+    <section class="cards-area">
+      <div class="cards-container" id="cardsPlayed"></div>
+    </section>
+
+    <!-- Right Sidebar: Players & Action Log -->
+    <aside class="sidebar">
+      <section class="panel">
+        <h2>Players</h2>
+        <div class="pill-list" id="players"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Action Log</h2>
+        <ul class="log" id="log"></ul>
+      </section>
+    </aside>
+
+    <!-- Victory Overlay -->
+    <div class="game-overlay" id="victoryOverlay" hidden>
+      <div class="overlay-content">
+        <h1 class="overlay-title victory-title">VICTORY!</h1>
+        <p class="overlay-subtitle" id="victorySubtitle">Room 1/5 Complete</p>
+        <div class="reward-card-display" id="rewardCardDisplay">
+          <h2>Reward Card Obtained!</h2>
+          <div class="reward-card" id="rewardCard">
+            <div class="reward-card-name" id="rewardCardName">Card Name</div>
+            <div class="reward-card-desc" id="rewardCardDesc">Effect description</div>
+          </div>
+        </div>
+        <p class="overlay-message" id="victoryMessage">Next: Goblin Pack</p>
+        <p class="overlay-hint">Press <kbd>ENTER</kbd> to continue</p>
+      </div>
+    </div>
+
+    <!-- Defeat Overlay -->
+    <div class="game-overlay" id="defeatOverlay" hidden>
+      <div class="overlay-content">
+        <h1 class="overlay-title defeat-title">DEFEAT</h1>
+        <p class="overlay-subtitle" id="defeatSubtitle">The party has fallen...</p>
+        <div class="defeat-stats">
+          <p><strong>Rooms Cleared:</strong> <span id="roomsCleared">0</span> / 5</p>
+          <p><strong>Final HP:</strong> <span id="finalHp">0</span></p>
+        </div>
+        <button class="primary-btn" onclick="location.reload()">Try Again</button>
+      </div>
+    </div>
+
+    <!-- Final Victory Overlay -->
+    <div class="game-overlay" id="finalVictoryOverlay" hidden>
+      <div class="overlay-content">
+        <h1 class="overlay-title final-victory-title">DUNGEON CONQUERED!</h1>
+        <p class="overlay-subtitle">You have defeated the Dragon Warden!</p>
+        <div class="victory-stats">
+          <p><strong>All 5 Monsters Defeated</strong></p>
+          <p><strong>Final Party HP:</strong> <span id="finalVictoryHp">100</span></p>
+        </div>
+        <button class="primary-btn" onclick="location.reload()">Play Again</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Table runs a single shared room (change to dynamic code if needed)
+    const room = "ABCD";
+    document.getElementById("roomCode").textContent = room;
+
+    const statusEl = document.getElementById("status");
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const ws = new WebSocket(`${wsProtocol}//${window.location.host}`);
+    const playersEl = document.getElementById("players");
+    const logEl = document.getElementById("log");
+    const cardsPlayedEl = document.getElementById("cardsPlayed");
+    const monsterNameEl = document.getElementById("monsterName");
+    const startBattleBtn = document.getElementById("startBattleBtn");
+    const monsterHpLabel = document.getElementById("monsterHpLabel");
+    const monsterHpBar = document.getElementById("monsterHpBar");
+    const partyHpLabel = document.getElementById("partyHpLabel");
+    const partyHpBar = document.getElementById("partyHpBar");
+    const phaseBanner = document.getElementById("phaseBanner");
+
+    const state = {
+      players: [],
+      decks: {},
+      monster: null,
+      partyHp: 0,
+      rage: 0,
+      turnTimer: null,
+      currentCards: [],
+      gameStarted: false,
+      currentPhase: null,
+      phaseTimer: null
+    };
+
+    // Card type mapping (matches controller)
+    const cardTypes = {
+      "strike": "attack", "firebolt": "attack", "multi_hit": "attack",
+      "ember-burst": "attack", "storm-quill": "attack",
+      "shield": "defense", "barrier": "defense", "dodge": "defense", "aegis-wave": "defense",
+      "heal": "skill", "boost": "skill", "focus": "skill", "gale-warden": "skill",
+      "trap": "utility", "freeze": "utility", "reveal_weakness": "utility", "void-lotus": "utility",
+      // Reward cards
+      "goblin-trophy": "attack", "troll-shield": "defense", "rune-power": "skill", "ogre-might": "attack"
+    };
+
+    const cardNames = {
+      "ember-burst": "Ember Burst", "aegis-wave": "Aegis Wave",
+      "void-lotus": "Void Lotus", "storm-quill": "Storm Quill",
+      "gale-warden": "Gale Warden", strike: "Strike",
+      firebolt: "Firebolt", multi_hit: "Multi Hit",
+      shield: "Shield", barrier: "Barrier", dodge: "Dodge",
+      heal: "Heal", boost: "Boost", focus: "Focus",
+      trap: "Trap", freeze: "Freeze", reveal_weakness: "Reveal Weakness"
+    };
+
+    // Monster image paths
+    const monsterImages = {
+      "Goblin Pack": "../assets/monsters/goblin_pack.png",
+      "Shield Troll": "../assets/monsters/Shield_Troll.png",
+      "Rune Sentinel": "../assets/monsters/Rune_Sentinel.png",
+      "Ogre Captain": "../assets/monsters/Ogre_Captain.png",
+      "Dragon Warden": "../assets/monsters/Dragon_Warden_(boss).png"
+    };
+
+    // Card image paths
+    const cardImages = {
+      "strike": "../assets/cards/strike.png",
+      "firebolt": "../assets/cards/firebolt.png",
+      "multi_hit": "../assets/cards/multi_hit.png",
+      "ember-burst": "../assets/cards/ember_burst.png",
+      "storm-quill": "../assets/cards/storm_quill.png",
+      "shield": "../assets/cards/shield.png",
+      "barrier": "../assets/cards/barrier.png",
+      "dodge": "../assets/cards/dodge.png",
+      "aegis-wave": "../assets/cards/aegis_wave.png",
+      "heal": "../assets/cards/heal.png",
+      "boost": "../assets/cards/boost.png",
+      "focus": "../assets/cards/focus.png",
+      "gale-warden": "../assets/cards/gale_warden.png",
+      "trap": "../assets/cards/trap.png",
+      "freeze": "../assets/cards/freeze.png",
+      "reveal_weakness": "../assets/cards/reveal_weakness.png",
+      "void-lotus": "../assets/cards/void_lotus.png",
+      // Boss cards
+      "brutal_claw": "../assets/cards/brutal_claw.png",
+      "overhead_smash": "../assets/cards/overhead_smash.png",
+      "cursed_howl": "../assets/cards/cursed_howl.png",
+      "flame_breath": "../assets/cards/flame_breath.png",
+      "tail_sweep": "../assets/cards/tail_sweep.png"
+    };
+
+    const monsterImageEl = document.getElementById("monsterImage");
+
+    const renderPlayers = () => {
+      // Refresh the player pill list whenever roster changes
+      playersEl.innerHTML = "";
+      if (!state.players.length) {
+        playersEl.textContent = "No controllers connected.";
+        return;
+      }
+      state.players.forEach(id => {
+        const pill = document.createElement("span");
+        pill.className = "pill";
+        const deckNote = state.decks[id] ? ` · ${state.decks[id]} cards` : "";
+        pill.textContent = id + deckNote;
+        playersEl.appendChild(pill);
+      });
+    };
+
+    const pushLog = (msg) => {
+      // Prepend a timestamped entry and keep the log short for readability
+      const li = document.createElement("li");
+      const time = document.createElement("time");
+      time.textContent = new Date().toLocaleTimeString();
+      li.textContent = msg;
+      li.prepend(time);
+      logEl.prepend(li);
+      while (logEl.childElementCount > 8) {
+        logEl.removeChild(logEl.lastChild);
+      }
+    };
+
+    const renderBars = () => {
+      if (state.monster) {
+        monsterHpLabel.textContent = state.monster.hp;
+        const pctM = state.monster.hp && state.monster.max ? Math.max(0, Math.min(100, (state.monster.hp / state.monster.max) * 100)) : 0;
+        monsterHpBar.style.width = `${pctM}%`;
+      }
+      partyHpLabel.textContent = state.partyHp;
+      const pctP = Math.max(0, Math.min(100, (state.partyHp / 100) * 100));
+      partyHpBar.style.width = `${pctP}%`;
+    };
+
+    const showPhase = (mode, text) => {
+      phaseBanner.hidden = false;
+      phaseBanner.textContent = text;
+      phaseBanner.classList.remove("attack", "boss");
+      if (mode === "attack") phaseBanner.classList.add("attack");
+      if (mode === "boss") phaseBanner.classList.add("boss");
+    };
+
+    // Render played cards visually (MTG-style cards)
+    const addPlayedCard = (playerId, cardId, cardName) => {
+      const cardType = cardTypes[cardId] || "attack";
+      const displayName = cardNames[cardId] || cardName || cardId;
+
+      const card = document.createElement("div");
+      card.className = `played-card card-type-${cardType}`;
+
+      const header = document.createElement("div");
+      header.className = "played-card-header";
+      header.textContent = displayName;
+
+      const player = document.createElement("div");
+      player.className = "played-card-player";
+      player.textContent = playerId === "BOSS" ? "BOSS" : playerId;
+
+      const art = document.createElement("div");
+      art.className = "played-card-art";
+
+      // Load card image if available
+      const imagePath = cardImages[cardId];
+      if (imagePath) {
+        const img = document.createElement("img");
+        img.src = imagePath;
+        img.alt = displayName;
+        art.appendChild(img);
+      }
+
+      card.appendChild(header);
+      card.appendChild(player);
+      card.appendChild(art);
+
+      cardsPlayedEl.appendChild(card);
+      state.currentCards.push(card);
+
+      // Auto-remove after 3 seconds to prevent clutter
+      setTimeout(() => {
+        card.style.transition = "opacity 400ms ease, transform 400ms ease";
+        card.style.opacity = "0";
+        card.style.transform = "scale(0.8)";
+        setTimeout(() => {
+          if (card.parentNode) card.parentNode.removeChild(card);
+          const idx = state.currentCards.indexOf(card);
+          if (idx > -1) state.currentCards.splice(idx, 1);
+        }, 400);
+      }, 3000);
+    };
+
+    // Clear all played cards (at turn start)
+    const clearPlayedCards = () => {
+      cardsPlayedEl.innerHTML = "";
+      state.currentCards = [];
+    };
+
+    // Helper function to format card description
+    const getCardDescription = (card) => {
+      const parts = [];
+      if (card.attack) parts.push(`+${card.attack} Attack`);
+      if (card.defense) parts.push(`+${card.defense} Defense`);
+      if (card.heal) parts.push(`+${card.heal} Heal`);
+      if (card.boost) parts.push(`+${Math.round(card.boost * 100)}% Damage Boost`);
+      if (card.rageDown) parts.push(`-${card.rageDown} Rage`);
+      if (card.revealWeakness) parts.push(`Reveals Weakness`);
+      return parts.join(', ');
+    };
+
+    // Start Battle button handler
+    startBattleBtn.onclick = () => {
+      if (!state.gameStarted && state.players.length > 0) {
+        ws.send(JSON.stringify({ type: "start_battle", room }));
+        startBattleBtn.hidden = true;
+        state.gameStarted = true;
+        // Update to show monster name instead of "Ready to Battle!"
+        if (state.monster) {
+          monsterNameEl.textContent = state.monster.name;
+        }
+        pushLog("Battle started!");
+      }
+    };
+
+    // Phased turn system
+    const setPhase = (phase, message, duration) => {
+      clearTimeout(state.phaseTimer);
+      state.currentPhase = phase;
+
+      // Update phase banner
+      phaseBanner.hidden = false;
+      phaseBanner.textContent = message;
+      phaseBanner.classList.remove("attack", "boss");
+
+      if (phase === "player") {
+        phaseBanner.classList.add("attack");
+      } else if (phase === "monster") {
+        phaseBanner.classList.add("boss");
+      }
+
+      statusEl.textContent = message;
+
+      return new Promise(resolve => {
+        if (duration) {
+          state.phaseTimer = setTimeout(resolve, duration);
+        }
+      });
+    };
+
+    ws.onopen = () => {
+      // Identify this socket as the table as soon as the link is ready
+      ws.send(JSON.stringify({ type: "join_table", room }));
+      // Initialize UI
+      renderPlayers();
+      statusEl.textContent = "Waiting for players...";
+      // Ensure overlays are hidden on connection
+      document.getElementById("victoryOverlay").hidden = true;
+      document.getElementById("defeatOverlay").hidden = true;
+      document.getElementById("finalVictoryOverlay").hidden = true;
+    };
+
+    // Keyboard handler for continuing to next room
+    document.addEventListener("keydown", e => {
+      const victoryOverlay = document.getElementById("victoryOverlay");
+      if (e.key === "Enter" && !victoryOverlay.hidden) {
+        // Hide victory overlay and continue to next room
+        victoryOverlay.hidden = true;
+        ws.send(JSON.stringify({ type: "continue_to_next_room", room }));
+        pushLog("Continuing to next battle...");
+      }
+    });
+
+    ws.onmessage = e => {
+      const data = JSON.parse(e.data);
+
+      if (data.type === "room_state") {
+        // Initial sync: table learns existing controllers already in the room
+        state.players = data.players || [];
+        renderPlayers();
+        statusEl.textContent = state.players.length
+          ? `Players connected: ${state.players.length}`
+          : "Waiting for players...";
+
+        // Update monster name if players are already connected
+        if (state.players.length > 0 && !state.gameStarted) {
+          monsterNameEl.textContent = "Ready to Battle!";
+        }
+      }
+
+      if (data.type === "player_joined") {
+          state.players = data.playerList || [];
+          renderPlayers();
+          statusEl.textContent = `Player ${data.playerId} connected (${state.players.length} total)`;
+          pushLog(`Player ${data.playerId} joined`);
+
+          // Show Start Battle button when players join (if game not started)
+          if (!state.gameStarted && state.players.length > 0) {
+            startBattleBtn.hidden = false;
+            monsterNameEl.textContent = "Ready to Battle!";
+          }
+      }
+
+      if (data.type === "player_left") {
+        state.players = data.playerList || [];
+        renderPlayers();
+        statusEl.textContent = state.players.length
+          ? `Player ${data.playerId} disconnected (${state.players.length} total)`
+          : "Waiting for players...";
+        pushLog(`Player ${data.playerId} left`);
+
+        // Reset to waiting message if no players left
+        if (state.players.length === 0 && !state.gameStarted) {
+          monsterNameEl.textContent = "Waiting for Battle...";
+          startBattleBtn.hidden = true;
+        }
+      }
+
+      if (data.type === "deck_info") {
+        state.decks[data.playerId] = data.deckSize;
+        pushLog(`Player ${data.playerId} submitted deck (${data.deckSize} cards)`);
+      }
+
+      if (data.type === "room_entered") {
+        state.monster = data.monster;
+        state.monster.max = data.monster.hp;
+        state.monster.roomIndex = data.roomIndex;
+        state.partyHp = data.partyHp;
+        // Update fight progress display
+        document.getElementById("fightProgress").textContent = `(Fight ${data.roomIndex + 1}/5)`;
+        clearPlayedCards(); // Clear cards from previous room
+        pushLog(`Entered ${data.monster.name} (HP ${data.monster.hp}, ATK ${data.monster.attack})`);
+        renderBars();
+
+        // Load monster image
+        const imagePath = monsterImages[data.monster.name];
+        if (imagePath && monsterImageEl) {
+          monsterImageEl.src = imagePath;
+          monsterImageEl.hidden = false;
+          monsterImageEl.alt = data.monster.name;
+        }
+
+        // Show Start Battle button if not started yet and we have players
+        if (!state.gameStarted && state.players.length > 0) {
+          monsterNameEl.textContent = data.monster.name;
+          startBattleBtn.hidden = false;
+          phaseBanner.hidden = true;
+          statusEl.textContent = `${data.monster.name} awaits - Click Start Battle!`;
+        } else if (!state.gameStarted) {
+          // No players yet, just show monster name
+          monsterNameEl.textContent = data.monster.name + " - Waiting for players...";
+          statusEl.textContent = "Waiting for players...";
+        } else {
+          // Game already started (subsequent rooms)
+          monsterNameEl.textContent = data.monster.name;
+          statusEl.textContent = `${data.monster.name} appears!`;
+        }
+      }
+
+      if (data.type === "phase_change") {
+        // Handle phased turn system
+        const phaseMessages = {
+          resolving: "Resolving Actions...",
+          monster: "Monster's Turn..."
+        };
+
+        const phaseModes = {
+          resolving: null,
+          monster: "boss"
+        };
+
+        const message = phaseMessages[data.phase] || data.message;
+        const mode = phaseModes[data.phase];
+
+        setPhase(data.phase, message, data.duration);
+        pushLog(message);
+      }
+
+      if (data.type === "turn_start") {
+        if (state.turnTimer) clearInterval(state.turnTimer);
+        clearPlayedCards(); // Clear cards from previous turn
+        let remaining = data.seconds || 10;
+        statusEl.textContent = `Turn ${data.turnIndex} — ${remaining}s`;
+        setPhase("player", `Play Your Cards! (${remaining}s)`);
+        state.turnTimer = setInterval(() => {
+          remaining -= 1;
+          if (remaining <= 0) {
+            clearInterval(state.turnTimer);
+            setPhase(null, "Ending turn...");
+          } else {
+            statusEl.textContent = `Turn ${data.turnIndex} — ${remaining}s`;
+            phaseBanner.textContent = `Play Your Cards! (${remaining}s)`;
+          }
+        }, 1000);
+      }
+
+      if (data.type === "card_action" || data.type === "card_played") {
+        // Display card visually at bottom of screen
+        const cardId = data.cardId || data.card;
+        const cardName = data.cardName || data.card;
+        addPlayedCard(data.playerId, cardId, cardName);
+
+        // Trigger glow effect on monster when player plays a card
+        if (data.playerId !== "BOSS") {
+          const cardType = cardTypes[cardId] || "attack"; // Default to attack if unknown
+          const monsterEl = document.querySelector(".monster-placeholder");
+          if (monsterEl) {
+            // Remove any existing glow classes
+            monsterEl.classList.remove("glow-attack", "glow-defense", "glow-skill", "glow-utility");
+            // Add the appropriate glow class
+            monsterEl.classList.add(`glow-${cardType}`);
+            // Remove the class after animation completes (800ms)
+            setTimeout(() => {
+              monsterEl.classList.remove(`glow-${cardType}`);
+            }, 800);
+          }
+        }
+
+        // Also log the action
+        const action = data.action || "play";
+        const label = data.label ? ` · ${data.label}` : "";
+        const verb = data.playerId === "BOSS"
+          ? "played"
+          : action === "collect"
+          ? "collected"
+          : action === "discard"
+          ? "discarded"
+          : "played";
+        const effectText = data.effect ? ` — ${data.effect}` : "";
+        const synergyLog = data.synergy?.length
+          ? ` | Synergy: ${data.synergy.map(s => `${s.name} (${s.bonus})`).join("; ")}`
+          : "";
+        const dmgLog = data.damage ? ` | Damage: ${data.damage}` : "";
+        pushLog(`${data.playerId} ${verb} ${cardName || cardId}${label}${effectText}${synergyLog}${dmgLog}`);
+      }
+
+      if (data.type === "turn_result") {
+        state.partyHp = data.partyHp;
+        if (state.monster) state.monster.hp = data.monsterHp;
+        statusEl.textContent = `Party HP ${data.partyHp} · Monster HP ${data.monsterHp}`;
+        renderBars();
+        const phaseNote = data.phase === "player_resolve" ? "Player effects resolved" : "Monster resolved";
+        pushLog(`${phaseNote}: atk ${data.attacks}, def ${data.defense}, heal ${data.heals}, boss hit ${data.bossAttack}`);
+        if (data.combosTriggered?.length) {
+          pushLog(`Combos: ${data.combosTriggered.join(", ")}`);
+        }
+        if (data.phase === "player_resolve") {
+          showPhase("boss", "Monster plays next");
+        } else if (data.phase === "boss_resolve") {
+          showPhase("attack", "Next turn starting");
+        }
+      }
+
+      if (data.type === "room_victory") {
+        // Show victory overlay with reward card
+        pushLog(`Room ${data.roomIndex + 1} cleared!`);
+        document.getElementById("victorySubtitle").textContent = `Fight ${data.roomIndex + 1}/${data.totalRooms} Complete!`;
+        document.getElementById("rewardCardName").textContent = data.rewardCard.name;
+        document.getElementById("rewardCardDesc").textContent = getCardDescription(data.rewardCard);
+        document.getElementById("victoryMessage").textContent = `Next: ${data.nextMonster}`;
+        document.getElementById("victoryOverlay").hidden = false;
+      }
+
+      if (data.type === "game_over") {
+        // Hide victory overlay if it was showing
+        document.getElementById("victoryOverlay").hidden = true;
+
+        if (data.result === "victory") {
+          // Final victory - defeated all 5 monsters!
+          pushLog("DUNGEON CONQUERED!");
+          document.getElementById("finalVictoryHp").textContent = data.partyHp || 0;
+          document.getElementById("finalVictoryOverlay").hidden = false;
+        } else if (data.result === "defeat") {
+          // Defeat
+          pushLog("Party defeated...");
+          document.getElementById("roomsCleared").textContent = state.monster ? (state.monster.roomIndex || 0) : 0;
+          document.getElementById("finalHp").textContent = data.partyHp || 0;
+          document.getElementById("defeatOverlay").hidden = false;
+        }
+      }
+    };
+
+    ws.onclose = () => {
+      statusEl.textContent = "Table disconnected. Refresh to rejoin.";
+    };
+  </script>
+
+</body>
+</html>

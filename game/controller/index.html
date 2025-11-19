@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Player Controller</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cormorant+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../shared/theme.css">
+  <link rel="stylesheet" href="./controller.css">
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="bar">
+      <div class="bar-label"><span>Party HP</span><span id="partyHpLabel">100</span></div>
+      <div class="bar-track"><div class="bar-fill" id="partyHpBar" style="width:100%"></div></div>
+    </div>
+    <div class="bar">
+      <div class="bar-label"><span>You</span><span id="selfHpLabel">20</span></div>
+      <div class="bar-track"><div class="bar-fill" id="selfHpBar" style="width:100%"></div></div>
+    </div>
+    <div class="status-chip" id="status">Not connected</div>
+  </div>
+
+  <div class="main">
+    <div class="hand-area">
+      <h3 class="hand-title">Your Hand (tap to focus, swipe up to play)</h3>
+      <div class="hand-scroller" id="fan"></div>
+    </div>
+    <button class="side-toggle" id="toggleSide">☰ Info</button>
+    <aside class="side-panel" id="sidePanel">
+      <div class="info-panel players">
+        <h3>Connected Players</h3>
+        <div class="player-list" id="players"></div>
+      </div>
+      <div class="info-panel last-action">
+        <h3>Last Move</h3>
+        <p id="lastMove">Waiting for your first play.</p>
+      </div>
+      <div class="info-panel">
+        <h3>Deck Builder (local)</h3>
+        <textarea id="deckInput" style="width:100%; min-height:80px;" placeholder="Card ids (comma separated)"></textarea>
+        <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="ghost-btn" id="saveDeck">Save Deck Locally</button>
+          <button class="ghost-btn" id="usePremade">Use Premade (ember-ward)</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+    // Prompt user for the shared room code (tables + players must match)
+    const room = prompt("Enter Room Code", "ABCD");
+    const playerId = Math.random().toString(36).slice(2, 6);
+    const savedDeck = JSON.parse(localStorage.getItem("deckList") || "[]");
+    const deckId = prompt("Enter deck id (or leave blank to use saved/custom):", "ember-ward") || "";
+
+    const statusDiv = document.getElementById("status");
+    const host = window.location.hostname || "localhost";
+    // keep socket reference so reconnections update handlers
+    let ws;
+    let reconnectTimer = null;
+    const playersEl = document.getElementById("players");
+    const lastMoveEl = document.getElementById("lastMove");
+    const handDiv = document.getElementById("hand");
+    const partyHpLabel = document.getElementById("partyHpLabel");
+    const partyHpBar = document.getElementById("partyHpBar");
+    const selfHpLabel = document.getElementById("selfHpLabel");
+    const selfHpBar = document.getElementById("selfHpBar");
+
+    const state = {
+      players: new Set(),
+      hand: [],
+      lastMove: null,
+      deckList: savedDeck,
+      deckSize: 0,
+      turnActive: false,
+      playSubmitted: false,
+      timerSeconds: 0,
+      partyHp: 100,
+      selfHp: 20
+    };
+
+    const cardNames = {
+      "ember-burst": "Ember Burst",
+      "aegis-wave": "Aegis Wave",
+      "void-lotus": "Void Lotus",
+      "storm-quill": "Storm Quill",
+      "gale-warden": "Gale Warden",
+      strike: "Strike",
+      firebolt: "Firebolt",
+      multi_hit: "Multi Hit",
+      shield: "Shield",
+      barrier: "Barrier",
+      dodge: "Dodge",
+      heal: "Heal",
+      boost: "Boost",
+      focus: "Focus",
+      trap: "Trap",
+      freeze: "Freeze",
+      reveal_weakness: "Reveal Weakness"
+    };
+
+    // Card type mapping for MTG-style color coding
+    const cardTypes = {
+      // Attack cards (Red)
+      "strike": "attack",
+      "firebolt": "attack",
+      "multi_hit": "attack",
+      "ember-burst": "attack",
+      "storm-quill": "attack",
+      // Defense cards (Blue)
+      "shield": "defense",
+      "barrier": "defense",
+      "dodge": "defense",
+      "aegis-wave": "defense",
+      // Skill cards (Green)
+      "heal": "skill",
+      "boost": "skill",
+      "focus": "skill",
+      "gale-warden": "skill",
+      // Utility cards (Purple)
+      "trap": "utility",
+      "freeze": "utility",
+      "reveal_weakness": "utility",
+      "void-lotus": "utility"
+    };
+
+    // Card stats (labels + numeric values); edit this map to adjust display
+    // Add 'art' property with path to image file when ready
+    const cardStats = {
+      // Dungeon Dashers set
+      "ember-burst": {
+        subtitle: "+6 attack",
+        flavor: "Solid damage. Helps trigger Team Strike.",
+        dmg: 6,
+        art: "../assets/cards/ember_burst.png"
+      },
+      "aegis-wave": {
+        subtitle: "Shield/Reflect",
+        flavor: "Use with Heal for Perfect Defense.",
+        shield: 6,
+        art: "../assets/cards/aegis_wave.png"
+      },
+      "void-lotus": {
+        subtitle: "Utility: blink/drain",
+        flavor: "Stall or reposition; flexible utility.",
+        art: "../assets/cards/void_lotus.png"
+      },
+      "storm-quill": {
+        subtitle: "1 dmg x up to 3",
+        flavor: "Chip multiple targets or scry.",
+        dmg: 3,
+        art: "../assets/cards/storm_quill.png"
+      },
+      "gale-warden": {
+        subtitle: "Wind avatar",
+        flavor: "Move/silence/haste. Great support.",
+        dmg: 5,
+        heal: 2,
+        art: "../assets/cards/gale_warden.png"
+      },
+      // Core action set
+      strike: {
+        subtitle: "+4 attack",
+        flavor: "Reliable strike.",
+        dmg: 4,
+        art: "../assets/cards/strike.png"
+      },
+      firebolt: {
+        subtitle: "4-10 attack",
+        flavor: "Swingy high roll.",
+        dmg: "4-10",
+        art: "../assets/cards/firebolt.png"
+      },
+      multi_hit: {
+        subtitle: "2x3 attack",
+        flavor: "Chip damage x3.",
+        dmg: "2x3",
+        art: "../assets/cards/multi_hit.png"
+      },
+      shield: {
+        subtitle: "Block 6",
+        flavor: "Pair with Heal for Perfect Defense.",
+        shield: 6,
+        art: "../assets/cards/shield.png"
+      },
+      barrier: {
+        subtitle: "Nullify next",
+        flavor: "Pair with Freeze for skip.",
+        art: "../assets/cards/barrier.png"
+      },
+      dodge: {
+        subtitle: "50% avoid",
+        flavor: "Self-only gamble.",
+        art: "../assets/cards/dodge.png"
+      },
+      heal: {
+        subtitle: "+4 heal",
+        flavor: "Pair with Shield for Perfect Defense.",
+        heal: 4,
+        art: "../assets/cards/heal.png"
+      },
+      boost: {
+        subtitle: "+50% team attack",
+        flavor: "Use when others attack.",
+        art: "../assets/cards/boost.png"
+      },
+      focus: {
+        subtitle: "Rage down",
+        flavor: "Lower rage meter.",
+        art: "../assets/cards/focus.png"
+      },
+      trap: {
+        subtitle: "After-attack 5",
+        flavor: "Triggers after boss swing.",
+        dmg: 5,
+        art: "../assets/cards/trap.png"
+      },
+      freeze: {
+        subtitle: "Skip attack (with Barrier)",
+        flavor: "Stall the boss.",
+        art: "../assets/cards/freeze.png"
+      },
+      reveal_weakness: {
+        subtitle: "Enable Weakness Combo",
+        flavor: "Use with 2+ attacks.",
+        art: "../assets/cards/reveal_weakness.png"
+      }
+    };
+
+    const renderBars = () => {
+      partyHpLabel.textContent = `${state.partyHp}`;
+      const pctParty = Math.max(0, Math.min(100, (state.partyHp / 100) * 100));
+      partyHpBar.style.width = `${pctParty}%`;
+      selfHpLabel.textContent = `${state.selfHp}`;
+      const pctSelf = Math.max(0, Math.min(100, (state.selfHp / 20) * 100));
+      selfHpBar.style.width = `${pctSelf}%`;
+    };
+
+    const updateStatus = (msg, phase) => {
+      statusDiv.textContent = msg;
+      statusDiv.classList.remove("phase-attack", "phase-boss");
+      if (phase === "attack") statusDiv.classList.add("phase-attack");
+      if (phase === "boss") statusDiv.classList.add("phase-boss");
+    };
+
+    const renderPlayers = () => {
+      playersEl.innerHTML = "";
+      if (!state.players.size) {
+        playersEl.textContent = "No players yet.";
+        return;
+      }
+      state.players.forEach(id => {
+        const pill = document.createElement("span");
+        pill.className = "player-pill";
+        pill.textContent = id === playerId ? `${id} (you)` : id;
+        playersEl.appendChild(pill);
+      });
+    };
+
+    const createElement = (tag, className, text) => {
+      const el = document.createElement(tag);
+      if (className) el.className = className;
+      if (text) el.textContent = text;
+      return el;
+    };
+
+    const deckInput = document.getElementById("deckInput");
+    const saveDeckBtn = document.getElementById("saveDeck");
+    const usePremadeBtn = document.getElementById("usePremade");
+    const toggleSideBtn = document.getElementById("toggleSide");
+    const sidePanel = document.getElementById("sidePanel");
+
+    const renderDeckBuilder = () => {
+      deckInput.value = state.deckList.join(", ");
+      saveDeckBtn.onclick = () => {
+        const ids = deckInput.value.split(",").map(s => s.trim()).filter(Boolean);
+        state.deckList = ids;
+        localStorage.setItem("deckList", JSON.stringify(ids));
+        alert(`Saved deck with ${ids.length} cards.`);
+      };
+      usePremadeBtn.onclick = () => {
+        deckInput.value = "ember-ward";
+        state.deckList = [];
+      };
+      toggleSideBtn.onclick = () => {
+        sidePanel.classList.toggle("open");
+      };
+    };
+
+    const verbs = {
+      play: "played",
+      collect: "collected",
+      discard: "discarded"
+    };
+
+    const sendCardAction = (card, action, detail, cardEl) => {
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        scheduleReconnect();
+        return;
+      }
+      ws.send(JSON.stringify({
+        type: "play_card",
+        room,
+        playerId,
+        cardId: card.id
+      }));
+      const suffix = detail?.label ? ` (${detail.label})` : "";
+      lastMoveEl.textContent = `You ${verbs[action] || action} ${card.name}${suffix}`;
+      if (cardEl) {
+        cardEl.classList.add("spent");
+        cardEl.querySelectorAll("button").forEach(btn => btn.disabled = true);
+      }
+    };
+
+    const renderHand = () => {
+      fan.innerHTML = "";
+      if (!state.hand.length) {
+        fan.appendChild(createElement("p", "hint", "Waiting for a hand from the table..."));
+        return;
+      }
+      state.hand.forEach(card => {
+        const slot = document.createElement("div");
+        slot.className = "card-slot";
+
+        const cardEl = document.createElement("article");
+        const cardId = card.id || card;
+        const cardType = cardTypes[cardId] || "attack"; // Default to attack if unknown
+        cardEl.className = `spell-card card-type-${cardType}`;
+        cardEl.dataset.cardId = cardId;
+
+        const header = createElement("div", "card-header");
+        const title = createElement("h4", null, cardNames[card.id] || card.name || card.id || card);
+        const meta = createElement("span", "hint", cardStats[card.id]?.subtitle || "Card");
+        header.appendChild(title);
+        header.appendChild(meta);
+
+        const tags = createElement("div", "tag-row");
+        (card.tags || []).forEach(tag => tags.appendChild(createElement("span", "tag-chip", tag)));
+
+        const desc = createElement("p", "card-description", cardStats[card.id]?.flavor || "Swipe up to play");
+        const hint = createElement("p", "play-hint", "Tap to focus, swipe up or press Play");
+
+        cardEl.appendChild(header);
+        if (card.tags?.length) cardEl.appendChild(tags);
+
+        // Enhanced badge with proper labeling
+        const stats = cardStats[cardId];
+        if (stats?.dmg || stats?.shield || stats?.heal) {
+          const badge = document.createElement("div");
+          badge.className = "badge";
+          let labelText = "STAT";
+          let valueText = "";
+
+          if (stats.dmg) {
+            labelText = "DMG";
+            valueText = `${stats.dmg}`;
+          } else if (stats.shield) {
+            labelText = "DEF";
+            valueText = `${stats.shield}`;
+          } else if (stats.heal) {
+            labelText = "HEAL";
+            valueText = `${stats.heal}`;
+          }
+
+          const label = createElement("span", "label", labelText);
+          const val = createElement("span", "value", valueText);
+          badge.appendChild(label);
+          badge.appendChild(val);
+          cardEl.appendChild(badge);
+        }
+        if (cardStats[card.id]?.art) {
+          const artWrap = document.createElement("div");
+          artWrap.className = "art-frame";
+          const img = document.createElement("img");
+          img.src = cardStats[card.id].art;
+          img.alt = cardNames[card.id] || card.id;
+          artWrap.appendChild(img);
+          cardEl.appendChild(artWrap);
+        } else {
+          const artWrap = document.createElement("div");
+          artWrap.className = "art-frame";
+          cardEl.appendChild(artWrap);
+        }
+        cardEl.appendChild(desc);
+        cardEl.appendChild(hint);
+
+        const focus = () => {
+          document.querySelectorAll(".card-slot").forEach(s => s.classList.remove("focused"));
+          slot.classList.add("focused");
+        };
+        const attemptPlay = () => {
+          if (!state.turnActive || state.playSubmitted) return;
+          state.playSubmitted = true; // Set immediately to prevent double-play
+          cardEl.classList.add("spent");
+          cardEl.style.transition = "transform 250ms ease, opacity 250ms ease";
+          cardEl.style.transform = "translateY(-90px)";
+          setTimeout(() => {
+            sendCardAction(card, "play", null, cardEl);
+          }, 150);
+        };
+
+        cardEl.addEventListener("click", () => {
+          if (slot.classList.contains("focused")) {
+            attemptPlay();
+          } else {
+            focus();
+          }
+        });
+
+        // Disable swipe-to-play; allow tap to focus then tap play
+        cardEl.addEventListener("touchstart", () => focus(), { passive: true });
+        cardEl.addEventListener("touchend", () => {}, { passive: true });
+
+        const playBtn = createElement("button", "play-btn", "Play");
+        playBtn.onclick = (e) => {
+          e.stopPropagation(); // Prevent event bubbling to card element
+          attemptPlay();
+        };
+
+        cardEl.appendChild(playBtn);
+
+        slot.appendChild(cardEl);
+        fan.appendChild(slot);
+      });
+    };
+
+    const setStatus = (msg) => statusDiv.textContent = msg;
+
+    const scheduleReconnect = () => {
+      if (reconnectTimer) return;
+      setStatus("Connection lost. Reconnecting...");
+      reconnectTimer = setTimeout(() => {
+        reconnectTimer = null;
+        connect();
+      }, 2000);
+    };
+
+    const connect = () => {
+      if (ws) {
+        ws.onclose = ws.onmessage = ws.onerror = ws.onopen = null;
+      }
+      setStatus(`Connecting to room ${room}...`);
+      const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      ws = new WebSocket(`${wsProtocol}//${window.location.host}`);
+
+      ws.onopen = () => {
+        ws.send(JSON.stringify({
+          type: "join_player",
+          room,
+          playerId,
+          deck: state.deckList.length ? state.deckList : undefined,
+          deckId: deckId || undefined
+        }));
+      };
+
+      ws.onmessage = e => {
+        const data = JSON.parse(e.data);
+
+        if (data.type === "player_joined") {
+          // Update roster tokens + status when anyone joins (self or others)
+          state.players = new Set(data.playerList || []);
+          renderPlayers();
+          if (data.playerId === playerId) {
+            setStatus(`Connected as ${playerId} · ${state.players.size} player(s)`);
+          } else {
+            setStatus(`Player ${data.playerId} joined · ${state.players.size} player(s)`);
+          }
+        }
+
+        if (data.type === "deck_info" && data.playerId === playerId) {
+          state.deckSize = data.deckSize || 0;
+          setStatus(`Deck ready (${state.deckSize} cards) · Players: ${state.players.size || "?"}`);
+        }
+
+        if (data.type === "player_left") {
+          // Remove pills + surface that someone disconnected
+          state.players = new Set(data.playerList || []);
+          renderPlayers();
+          setStatus(`Player ${data.playerId} left · ${state.players.size} player(s)`);
+        }
+
+        if (data.type === "hand") {
+          state.hand = (data.hand || []).map(card => {
+            if (typeof card === "string") {
+              return { id: card, name: card.toUpperCase() };
+            }
+            return card;
+          });
+          state.playSubmitted = false;
+          renderHand();
+        }
+
+        if (data.type === "card_action" || data.type === "card_played") {
+          const action = data.action || "play";
+          const suffix = data.label ? ` (${data.label})` : "";
+          const effectNote = data.effect ? ` — ${data.effect}` : "";
+          const synergyNote = data.synergy?.length
+            ? " | Synergy: " + data.synergy.map(s => `${s.name} (${s.bonus})`).join("; ")
+            : "";
+          if (data.playerId === "BOSS") {
+            const dmgNote = data.damage ? ` for ${data.damage}` : "";
+            lastMoveEl.textContent = `Monster played ${data.cardName || data.card}${dmgNote}`;
+          } else if (data.playerId !== playerId) {
+            lastMoveEl.textContent = `${data.playerId} ${verbs[action] || action} ${data.cardName || data.card}${suffix}${effectNote}${synergyNote}`;
+          } else {
+            lastMoveEl.textContent = `You ${verbs[action] || action} ${data.cardName || data.card}${suffix}${effectNote}${synergyNote}`;
+          }
+        }
+
+        if (data.type === "turn_start") {
+          state.turnActive = true;
+          state.playSubmitted = false;
+          state.timerSeconds = data.seconds || 10;
+          updateStatus(`Turn ${data.turnIndex} - ${state.timerSeconds}s`, "attack");
+          renderHand();
+        }
+
+        if (data.type === "turn_result") {
+          state.turnActive = false;
+          const combos = (data.combosTriggered || []).join(", ");
+          const isPlayerPhase = data.phase === "player_resolve";
+          const phaseNote = isPlayerPhase ? "Your team resolved" : "Monster resolved";
+          lastMoveEl.textContent = `${phaseNote}: atk ${data.attacks}, def ${data.defense}, heal ${data.heals}, boss hit ${data.bossAttack} ${combos ? "| combos: " + combos : ""}`;
+          state.partyHp = data.partyHp ?? state.partyHp;
+          const perPlayerDmg = data.phase === "boss_resolve" && state.players.size ? Math.ceil((data.bossAttack || 0) / state.players.size) : 0;
+          if (perPlayerDmg > 0) {
+            state.selfHp = Math.max(0, state.selfHp - perPlayerDmg);
+            lastMoveEl.textContent += ` | You took ${perPlayerDmg}`;
+          }
+          renderBars();
+          updateStatus(`${phaseNote} · Party HP ${state.partyHp} · Monster HP ${data.monsterHp}`, data.phase === "boss_resolve" ? "boss" : "attack");
+        }
+      };
+
+      ws.onerror = () => {
+        scheduleReconnect();
+      };
+
+      ws.onclose = () => {
+        scheduleReconnect();
+      };
+    };
+
+    connect();
+    renderDeckBuilder();
+    renderBars();
+  </script>
+
+</body>
+</html>

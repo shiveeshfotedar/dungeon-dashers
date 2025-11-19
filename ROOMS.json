@@ -1,0 +1,65 @@
+[
+  {
+    "id": "slime_splash",
+    "name": "Slime Splash",
+    "hp": 30,
+    "attack": 4,
+    "ragePerTurn": 8,
+    "image": "/rooms/slime.png",
+    "special": "none"
+  },
+  {
+    "id": "goblin_gang",
+    "name": "Goblin Gang",
+    "hp": 40,
+    "attack": 6,
+    "ragePerTurn": 10,
+    "image": "/rooms/goblins.png",
+    "special": "none"
+  },
+  {
+    "id": "bat_swarm",
+    "name": "Bat Swarm",
+    "hp": 35,
+    "attack": 5,
+    "ragePerTurn": 10,
+    "image": "/rooms/bats.png",
+    "special": "defense_down"
+  },
+  {
+    "id": "troll_bruiser",
+    "name": "Troll Bruiser",
+    "hp": 60,
+    "attack": 8,
+    "ragePerTurn": 12,
+    "image": "/rooms/troll.png",
+    "special": "stun"
+  },
+  {
+    "id": "poison_hall",
+    "name": "Poison Hall",
+    "hp": 55,
+    "attack": 7,
+    "ragePerTurn": 15,
+    "image": "/rooms/poison.png",
+    "special": "poison_tick"
+  },
+  {
+    "id": "chaos_room",
+    "name": "Chaos Room",
+    "hp": 50,
+    "attack": 9,
+    "ragePerTurn": 15,
+    "image": "/rooms/chaos.png",
+    "special": "random"
+  },
+  {
+    "id": "dragon_lord",
+    "name": "Dragon Lord",
+    "hp": 120,
+    "attack": 12,
+    "ragePerTurn": 20,
+    "image": "/rooms/dragon.png",
+    "special": "rage_burst"
+  }
+]

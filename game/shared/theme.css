@@ -1,0 +1,119 @@
+:root {
+  --font-body: "Cormorant Garamond", "Times New Roman", serif;
+  --font-display: "Cinzel Decorative", "Cormorant Garamond", serif;
+  --color-text: #efe7cf;
+  --color-muted: rgba(252, 245, 226, 0.7);
+  --gradient-bg: radial-gradient(circle at 20% -10%, #3c2b43 0%, #1b1228 45%, #09050f 100%);
+  --surface-panel: rgba(22, 15, 28, 0.92);
+  --surface-card: rgba(255, 255, 255, 0.03);
+  --surface-muted: rgba(255, 255, 255, 0.06);
+  --border-soft: rgba(255, 215, 164, 0.12);
+  --border-muted: rgba(255, 215, 164, 0.28);
+  --primary-start: #c0943f;
+  --primary-end: #f6d58b;
+  --danger-border: rgba(197, 67, 67, 0.6);
+  --danger-bg: rgba(197, 67, 67, 0.2);
+  --ghost-bg: rgba(255, 255, 255, 0.07);
+  --ghost-border: rgba(255, 255, 255, 0.18);
+  --accent-arch: radial-gradient(circle, rgba(246,213,139,0.28) 0%, rgba(0,0,0,0) 65%);
+
+  /* MTG-Style Card Type Colors (Gothic-themed) */
+  /* Attack - Crimson Red */
+  --card-attack-border: #c74343;
+  --card-attack-glow: rgba(199, 67, 67, 0.7);
+  --card-attack-bg-start: #3d1a1a;
+  --card-attack-bg-end: rgba(199, 67, 67, 0.15);
+  --card-attack-accent: #ff7b7b;
+
+  /* Defense - Royal Blue */
+  --card-defense-border: #4a7ab8;
+  --card-defense-glow: rgba(74, 122, 184, 0.7);
+  --card-defense-bg-start: #1a2d47;
+  --card-defense-bg-end: rgba(74, 122, 184, 0.15);
+  --card-defense-accent: #6ba3ff;
+
+  /* Skill - Emerald Green */
+  --card-skill-border: #52a352;
+  --card-skill-glow: rgba(82, 163, 82, 0.7);
+  --card-skill-bg-start: #1a3d1a;
+  --card-skill-bg-end: rgba(82, 163, 82, 0.15);
+  --card-skill-accent: #7bff7b;
+
+  /* Utility - Mystic Purple */
+  --card-utility-border: #8b5ac7;
+  --card-utility-glow: rgba(139, 90, 199, 0.7);
+  --card-utility-bg-start: #2d1a47;
+  --card-utility-bg-end: rgba(139, 90, 199, 0.15);
+  --card-utility-accent: #b58bff;
+
+  /* Stat Badge Colors */
+  --badge-damage-bg: linear-gradient(135deg, #c74343, #ff6b6b);
+  --badge-defense-bg: linear-gradient(135deg, #4a7ab8, #6ba3ff);
+  --badge-heal-bg: linear-gradient(135deg, #52a352, #7bff7b);
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--color-text);
+  margin: 0;
+  background: var(--gradient-bg);
+}
+
+.primary-btn,
+.ghost-btn,
+.danger-btn {
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: transform 100ms ease, box-shadow 100ms ease;
+}
+
+.primary-btn {
+  background: linear-gradient(120deg, var(--primary-start), var(--primary-end));
+  color: #1a0f08;
+}
+
+.ghost-btn {
+  background: var(--ghost-bg);
+  border-color: var(--ghost-border);
+  color: var(--color-text);
+}
+
+.danger-btn {
+  background: var(--danger-bg);
+  border-color: var(--danger-border);
+  color: #ff8c8c;
+}
+
+.primary-btn:hover,
+.ghost-btn:hover,
+.danger-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.35);
+}
+
+.primary-btn:active,
+.ghost-btn:active,
+.danger-btn:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.tag-chip,
+.pill {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border-muted);
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.hint {
+  font-size: 0.8rem;
+  color: var(--color-muted);
+}
