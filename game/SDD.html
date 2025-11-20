@@ -23,7 +23,6 @@
 
     .slide {
       min-height: 100vh;
-      max-height: 100vh;
       padding: 80px 100px;
       max-width: 1400px;
       margin: 0 auto;
@@ -32,7 +31,6 @@
       justify-content: center;
       scroll-snap-align: start;
       position: relative;
-      overflow-y: auto;
     }
 
     .slide::after {
@@ -129,8 +127,6 @@
       font-size: 0.85rem;
       line-height: 1.6;
       overflow-x: auto;
-      overflow-y: auto;
-      max-height: 400px;
       color: var(--color-text);
       white-space: pre-wrap;
     }
@@ -396,8 +392,6 @@
       font-family: 'Fira Code', monospace;
       font-size: 0.85rem;
       line-height: 1.8;
-      max-height: 300px;
-      overflow-y: auto;
     }
 
     .file-tree .folder {
