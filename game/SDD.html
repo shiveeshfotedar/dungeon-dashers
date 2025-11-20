@@ -703,10 +703,14 @@ wss.<span class="function">on</span>(<span class="string">"connection"</span>, w
   <span class="keyword">const</span> json = JSON.<span class="function">stringify</span>(payload);
 
   <span class="comment">// Send to TV</span>
-  <span class="keyword">if</span> (roomObj.<span class="property">table</span>) roomObj.<span class="property">table</span>.<span class="function">send</span>(json);
+  <span class="keyword">if</span> (roomObj.<span class="property">table</span>) {
+    roomObj.<span class="property">table</span>.<span class="function">send</span>(json);
+  }
 
   <span class="comment">// Send to all phones</span>
-  roomObj.<span class="property">players</span>.<span class="function">forEach</span>(p => p.<span class="property">ws</span>.<span class="function">send</span>(json));
+  roomObj.<span class="property">players</span>.<span class="function">forEach</span>(p => {
+    p.<span class="property">ws</span>.<span class="function">send</span>(json);
+  });
 };
       </div>
 
@@ -773,8 +777,13 @@ wss.<span class="function">on</span>(<span class="string">"connection"</span>, w
         <h3>Client WebSocket Connection</h3>
         <div class="code-block">
 <span class="comment">// controller/index.html</span>
-<span class="keyword">const</span> wsProtocol = window.<span class="property">location</span>.<span class="property">protocol</span> === <span class="string">'https:'</span> ? <span class="string">'wss:'</span> : <span class="string">'ws:'</span>;
-<span class="keyword">const</span> ws = <span class="keyword">new</span> <span class="function">WebSocket</span>(`<span class="keyword">${</span>wsProtocol<span class="keyword">}</span>//<span class="keyword">${</span>window.<span class="property">location</span>.<span class="property">host</span><span class="keyword">}</span>`);
+<span class="keyword">const</span> wsProtocol = window.<span class="property">location</span>.<span class="property">protocol</span> === <span class="string">'https:'</span>
+  ? <span class="string">'wss:'</span>
+  : <span class="string">'ws:'</span>;
+
+<span class="keyword">const</span> ws = <span class="keyword">new</span> <span class="function">WebSocket</span>(
+  `<span class="keyword">${</span>wsProtocol<span class="keyword">}</span>//<span class="keyword">${</span>window.<span class="property">location</span>.<span class="property">host</span><span class="keyword">}</span>`
+);
 
 ws.<span class="property">onopen</span> = () => {
   ws.<span class="function">send</span>(JSON.<span class="function">stringify</span>({
@@ -974,17 +983,26 @@ ws.<span class="property">onmessage</span> = e => {
   <span class="keyword">const</span> plays = game.<span class="property">pendingPlays</span>;
 
   <span class="comment">// 1. Calculate totals from all cards</span>
-  <span class="keyword">let</span> totalAttack = 0, totalDefense = 0, totalHeal = 0;
+  <span class="keyword">let</span> totalAttack = 0;
+  <span class="keyword">let</span> totalDefense = 0;
+  <span class="keyword">let</span> totalHeal = 0;
+
   Object.<span class="function">values</span>(plays).<span class="function">forEach</span>(cardId => {
     <span class="keyword">const</span> effect = CARD_EFFECTS[cardId];
-    <span class="keyword">if</span> (effect.<span class="property">attack</span>) totalAttack += effect.<span class="property">attack</span>;
-    <span class="keyword">if</span> (effect.<span class="property">defense</span>) totalDefense += effect.<span class="property">defense</span>;
-    <span class="keyword">if</span> (effect.<span class="property">heal</span>) totalHeal += effect.<span class="property">heal</span>;
+    <span class="keyword">if</span> (effect.<span class="property">attack</span>) {
+      totalAttack += effect.<span class="property">attack</span>;
+    }
+    <span class="keyword">if</span> (effect.<span class="property">defense</span>) {
+      totalDefense += effect.<span class="property">defense</span>;
+    }
+    <span class="keyword">if</span> (effect.<span class="property">heal</span>) {
+      totalHeal += effect.<span class="property">heal</span>;
+    }
   });
 
   <span class="comment">// 2. Check for combos</span>
   <span class="keyword">if</span> (attackCardCount >= 3) {
-    totalAttack *= 1.5; <span class="comment">// TEAM_STRIKE</span>
+    totalAttack *= 1.5; <span class="comment">// TEAM_STRIKE combo</span>
   }
 
   <span class="comment">// 3. Apply damage to monster</span>
@@ -1001,7 +1019,10 @@ ws.<span class="property">onmessage</span> = e => {
   game.<span class="property">rage</span> += monster.<span class="property">ragePerTurn</span>;
 
   <span class="comment">// 7. Broadcast result</span>
-  <span class="function">broadcastToRoom</span>(room, { <span class="property">type</span>: <span class="string">"turn_result"</span>, ... });
+  <span class="function">broadcastToRoom</span>(room, {
+    <span class="property">type</span>: <span class="string">"turn_result"</span>,
+    ...
+  });
 };
         </div>
       </div>
