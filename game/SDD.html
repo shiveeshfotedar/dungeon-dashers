@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dungeon Dashers - System Design Document</title>
+  <link rel="stylesheet" href="shared/theme.css">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cormorant+Garamond:wght@400;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-snap-type: y mandatory;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      overflow-x: hidden;
+    }
+
+    .slide {
+      min-height: 100vh;
+      padding: 80px 100px;
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      scroll-snap-align: start;
+      position: relative;
+    }
+
+    .slide::after {
+      content: '';
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 4px;
+      background: var(--border-soft);
+      border-radius: 2px;
+    }
+
+    .slide:last-of-type::after {
+      display: none;
+    }
+
+    .section-intro {
+      font-size: 1.1rem;
+      color: var(--color-muted);
+      max-width: 800px;
+      line-height: 1.7;
+      margin-bottom: 16px;
+    }
+
+    .design-header {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .design-header h1 {
+      font-family: var(--font-display);
+      font-size: 4.5rem;
+      margin: 0 0 24px;
+      background: linear-gradient(120deg, var(--primary-start), var(--primary-end));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .design-header p {
+      font-size: 1.5rem;
+      color: var(--color-muted);
+      margin: 0;
+    }
+
+    .design-header .tagline {
+      font-size: 1.1rem;
+      color: var(--color-muted);
+      opacity: 0.8;
+      margin-top: 16px;
+      max-width: 600px;
+      line-height: 1.6;
+    }
+
+    section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    h2 {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin: 0 0 40px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-soft);
+      flex-shrink: 0;
+    }
+
+    h3 {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--primary-end);
+      margin: 0 0 16px;
+    }
+
+    /* Code blocks */
+    .code-block {
+      background: rgba(0,0,0,0.4);
+      border: 1px solid var(--border-soft);
+      border-radius: 12px;
+      padding: 20px;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+      line-height: 1.6;
+      overflow-x: auto;
+      color: var(--color-text);
+    }
+
+    .code-block .comment {
+      color: #6a9955;
+    }
+
+    .code-block .keyword {
+      color: #c586c0;
+    }
+
+    .code-block .string {
+      color: #ce9178;
+    }
+
+    .code-block .function {
+      color: #dcdcaa;
+    }
+
+    .code-block .property {
+      color: #9cdcfe;
+    }
+
+    /* Architecture Diagram */
+    .arch-diagram {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 30px;
+      margin: 40px 0;
+    }
+
+    .arch-row {
+      display: flex;
+      gap: 40px;
+      align-items: center;
+    }
+
+    .arch-box {
+      padding: 20px 32px;
+      border-radius: 12px;
+      text-align: center;
+      font-family: var(--font-display);
+      font-size: 0.9rem;
+      letter-spacing: 0.05em;
+    }
+
+    .arch-box.server {
+      background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+      color: #090b12;
+      font-weight: 700;
+      box-shadow: 0 0 30px rgba(192, 148, 63, 0.4);
+    }
+
+    .arch-box.client {
+      background: var(--surface-card);
+      border: 2px solid var(--border-soft);
+      color: var(--color-text);
+    }
+
+    .arch-box.phone {
+      border-color: var(--card-skill-border);
+    }
+
+    .arch-box.tv {
+      border-color: var(--card-defense-border);
+    }
+
+    .arch-arrow {
+      color: var(--primary-start);
+      font-size: 1.5rem;
+    }
+
+    .arch-label {
+      font-size: 0.75rem;
+      color: var(--color-muted);
+      margin-top: 8px;
+    }
+
+    /* Info Grid */
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      margin-top: 40px;
+    }
+
+    .info-card {
+      background: var(--surface-card);
+      border: 1px solid var(--border-soft);
+      border-radius: 12px;
+      padding: 24px;
+    }
+
+    .info-card h4 {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      color: var(--primary-end);
+      margin: 0 0 12px;
+    }
+
+    .info-card p {
+      font-size: 0.9rem;
+      color: var(--color-muted);
+      margin: 0;
+      line-height: 1.6;
+    }
+
+    .info-card code {
+      background: rgba(0,0,0,0.3);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.8rem;
+    }
+
+    /* Message Flow */
+    .flow-diagram {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-top: 40px;
+    }
+
+    .flow-step {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .flow-number {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+      color: #090b12;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+
+    .flow-content {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .flow-from, .flow-to {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .flow-from {
+      background: rgba(139, 90, 199, 0.2);
+      border: 1px solid rgba(139, 90, 199, 0.5);
+      color: #b58bff;
+    }
+
+    .flow-to {
+      background: rgba(74, 122, 184, 0.2);
+      border: 1px solid rgba(74, 122, 184, 0.5);
+      color: #6ba3ff;
+    }
+
+    .flow-arrow {
+      color: var(--primary-start);
+    }
+
+    .flow-message {
+      flex: 1;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.8rem;
+      color: var(--color-muted);
+      background: rgba(0,0,0,0.3);
+      padding: 8px 12px;
+      border-radius: 6px;
+    }
+
+    /* Protocol Table */
+    .protocol-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 24px;
+    }
+
+    .protocol-table th,
+    .protocol-table td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-soft);
+    }
+
+    .protocol-table th {
+      font-family: var(--font-display);
+      font-size: 0.8rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--primary-end);
+      background: rgba(0,0,0,0.3);
+    }
+
+    .protocol-table td {
+      font-size: 0.85rem;
+      color: var(--color-muted);
+    }
+
+    .protocol-table code {
+      background: rgba(0,0,0,0.3);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.75rem;
+      color: var(--color-text);
+    }
+
+    /* Tech Stack */
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-top: 40px;
+    }
+
+    .tech-item {
+      background: var(--surface-card);
+      border: 1px solid var(--border-soft);
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .tech-icon {
+      font-size: 2.5rem;
+      margin-bottom: 12px;
+    }
+
+    .tech-name {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      color: var(--primary-end);
+      margin-bottom: 8px;
+    }
+
+    .tech-desc {
+      font-size: 0.85rem;
+      color: var(--color-muted);
+      line-height: 1.5;
+    }
+
+    /* File Structure */
+    .file-tree {
+      background: rgba(0,0,0,0.4);
+      border: 1px solid var(--border-soft);
+      border-radius: 12px;
+      padding: 24px;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+      line-height: 1.8;
+    }
+
+    .file-tree .folder {
+      color: var(--primary-end);
+    }
+
+    .file-tree .file {
+      color: var(--color-muted);
+    }
+
+    .file-tree .comment {
+      color: #6a9955;
+      font-style: italic;
+    }
+
+    /* Turn Flow Visual */
+    .turn-phases {
+      display: flex;
+      gap: 16px;
+      margin: 40px 0;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .phase-box {
+      background: var(--surface-card);
+      border: 1px solid var(--border-soft);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      min-width: 150px;
+    }
+
+    .phase-box.active {
+      border-color: var(--primary-start);
+      box-shadow: 0 0 20px rgba(192, 148, 63, 0.3);
+    }
+
+    .phase-name {
+      font-family: var(--font-display);
+      font-size: 0.9rem;
+      color: var(--primary-end);
+      margin-bottom: 8px;
+    }
+
+    .phase-time {
+      font-size: 0.8rem;
+      color: var(--color-muted);
+    }
+
+    .phase-arrow {
+      display: flex;
+      align-items: center;
+      color: var(--primary-start);
+      font-size: 1.5rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .slide {
+        padding: 60px 40px;
+      }
+
+      .info-grid,
+      .tech-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .slide {
+        padding: 40px 20px;
+      }
+
+      .design-header h1 {
+        font-size: 2.5rem;
+      }
+
+      .arch-row {
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .flow-content {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Title Slide -->
+  <div class="slide">
+    <header class="design-header">
+      <h1>System Design</h1>
+      <p>Technical Architecture Document</p>
+      <div class="tagline">
+        How we built a real-time multiplayer game using WebSockets,
+        turning phones into controllers and TVs into shared displays.
+      </div>
+      <div style="margin-top: 60px; display: flex; gap: 24px;">
+        <div style="width: 12px; height: 12px; border-radius: 50%; background: var(--card-attack-border);"></div>
+        <div style="width: 12px; height: 12px; border-radius: 50%; background: var(--card-defense-border);"></div>
+        <div style="width: 12px; height: 12px; border-radius: 50%; background: var(--card-skill-border);"></div>
+        <div style="width: 12px; height: 12px; border-radius: 50%; background: var(--card-utility-border);"></div>
+      </div>
+    </header>
+  </div>
+
+  <!-- Architecture Overview -->
+  <div class="slide">
+    <section>
+      <h2>Architecture Overview</h2>
+      <p class="section-intro">
+        Dungeon Dashers uses a client-server architecture with WebSockets for real-time bidirectional communication.
+        A single Node.js server manages game state while multiple clients (phones and TV) connect via WebSocket.
+      </p>
+
+      <div class="arch-diagram">
+        <div class="arch-box server">
+          NODE.JS SERVER
+          <div class="arch-label">Port 8080 - Game State + WebSocket Hub</div>
+        </div>
+
+        <div class="arch-arrow">|</div>
+        <div style="font-size: 0.8rem; color: var(--color-muted);">WebSocket (ws://)</div>
+        <div class="arch-arrow">|</div>
+
+        <div class="arch-row">
+          <div class="arch-box client phone">
+            PHONE 1
+            <div class="arch-label">Controller</div>
+          </div>
+          <div class="arch-box client phone">
+            PHONE 2
+            <div class="arch-label">Controller</div>
+          </div>
+          <div class="arch-box client phone">
+            PHONE N
+            <div class="arch-label">Controller</div>
+          </div>
+          <div class="arch-box client tv">
+            TV DISPLAY
+            <div class="arch-label">Receiver</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-card">
+          <h4>Why WebSockets?</h4>
+          <p>
+            Unlike HTTP request/response, WebSockets maintain a persistent connection allowing the server
+            to push updates instantly to all clients. This enables real-time game state sync without polling.
+          </p>
+        </div>
+        <div class="info-card">
+          <h4>Server Authority</h4>
+          <p>
+            The server is the single source of truth. It manages game state, validates plays, resolves turns,
+            and broadcasts results. Clients only send actions and render state they receive.
+          </p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Tech Stack -->
+  <div class="slide">
+    <section>
+      <h2>Technology Stack</h2>
+      <p class="section-intro">
+        Built with minimal dependencies for simplicity and portability. The entire game runs on standard web technologies
+        with no app downloads required.
+      </p>
+
+      <div class="tech-grid">
+        <div class="tech-item">
+          <div class="tech-icon">NODE</div>
+          <div class="tech-name">Node.js 18+</div>
+          <div class="tech-desc">
+            ES Modules runtime for the server. Handles WebSocket connections,
+            game logic, and serves static files.
+          </div>
+        </div>
+        <div class="tech-item">
+          <div class="tech-icon">WS</div>
+          <div class="tech-name">ws Library</div>
+          <div class="tech-desc">
+            Lightweight WebSocket implementation for Node.js.
+            Handles connection upgrades and message framing.
+          </div>
+        </div>
+        <div class="tech-item">
+          <div class="tech-icon">HTML</div>
+          <div class="tech-name">Vanilla JS/CSS</div>
+          <div class="tech-desc">
+            No frontend framework. Plain HTML/CSS/JS for both controller and receiver.
+            Uses native WebSocket API.
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 40px;">
+        <h3>File Structure</h3>
+        <div class="file-tree">
+          <span class="folder">game/</span><br>
+          &nbsp;&nbsp;<span class="folder">server/</span><br>
+          &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">index.js</span> <span class="comment">// Main server + WebSocket handler</span><br>
+          &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">rooms.js</span> <span class="comment">// Room management (Map-based)</span><br>
+          &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">config.js</span> <span class="comment">// Game constants + deck definitions</span><br>
+          &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">decks.js</span> <span class="comment">// Deck validation + dealing</span><br>
+          &nbsp;&nbsp;<span class="folder">controller/</span><br>
+          &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">index.html</span> <span class="comment">// Phone UI + client WebSocket</span><br>
+          &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">controller.css</span> <span class="comment">// Mobile-optimized styles</span><br>
+          &nbsp;&nbsp;<span class="folder">receiver/</span><br>
+          &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">index.html</span> <span class="comment">// TV display + client WebSocket</span><br>
+          &nbsp;&nbsp;<span class="folder">shared/</span><br>
+          &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">theme.css</span> <span class="comment">// Design tokens + components</span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- WebSocket Communication -->
+  <div class="slide">
+    <section>
+      <h2>WebSocket Communication</h2>
+      <p class="section-intro">
+        All communication happens over a single WebSocket connection per client.
+        Messages are JSON objects with a <code>type</code> field that determines how they're processed.
+      </p>
+
+      <div class="info-grid">
+        <div class="info-card">
+          <h4>Connection Setup</h4>
+          <p>
+            Clients connect to <code>ws://host:8080</code> and immediately send either <code>join_table</code>
+            (TV) or <code>join_player</code> (phone) to identify themselves. The server tracks each socket
+            and its role.
+          </p>
+        </div>
+        <div class="info-card">
+          <h4>Broadcasting</h4>
+          <p>
+            The server broadcasts game events to all clients in a room simultaneously.
+            Both TV and phones receive the same messages but render them differently.
+          </p>
+        </div>
+      </div>
+
+      <div style="margin-top: 40px;">
+        <h3>Server-Side WebSocket Handler</h3>
+        <div class="code-block">
+<span class="keyword">import</span> { WebSocketServer } <span class="keyword">from</span> <span class="string">'ws'</span>;
+
+<span class="keyword">const</span> wss = <span class="keyword">new</span> <span class="function">WebSocketServer</span>({ server });
+
+wss.<span class="function">on</span>(<span class="string">"connection"</span>, ws => {
+  ws.<span class="function">on</span>(<span class="string">"message"</span>, raw => {
+    <span class="keyword">const</span> data = JSON.<span class="function">parse</span>(raw);
+
+    <span class="keyword">if</span> (data.<span class="property">type</span> === <span class="string">"join_player"</span>) {
+      <span class="comment">// Register phone as player in room</span>
+      <span class="function">addPlayerSocket</span>(data.<span class="property">room</span>, data.<span class="property">playerId</span>, ws);
+      <span class="function">broadcastToRoom</span>(data.<span class="property">room</span>, {
+        <span class="property">type</span>: <span class="string">"player_joined"</span>,
+        <span class="property">playerId</span>: data.<span class="property">playerId</span>
+      });
+    }
+
+    <span class="keyword">if</span> (data.<span class="property">type</span> === <span class="string">"play_card"</span>) {
+      <span class="comment">// Store play and check if all players submitted</span>
+      game.<span class="property">pendingPlays</span>[data.<span class="property">playerId</span>] = data.<span class="property">cardId</span>;
+    }
+  });
+});
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Room Management -->
+  <div class="slide">
+    <section>
+      <h2>Room Management</h2>
+      <p class="section-intro">
+        Rooms are identified by a 4-character code (e.g., "ABCD"). Each room contains one table socket,
+        multiple player sockets, and the complete game state.
+      </p>
+
+      <div class="code-block">
+<span class="comment">// rooms.js - In-memory room storage</span>
+<span class="keyword">const</span> rooms = <span class="keyword">new</span> <span class="function">Map</span>();
+
+<span class="keyword">const</span> <span class="function">ensureRoom</span> = room => {
+  <span class="keyword">if</span> (!rooms.<span class="function">has</span>(room)) {
+    rooms.<span class="function">set</span>(room, {
+      <span class="property">table</span>: <span class="keyword">null</span>,      <span class="comment">// TV WebSocket</span>
+      <span class="property">players</span>: [],      <span class="comment">// Array of { id, ws }</span>
+      <span class="property">game</span>: {}          <span class="comment">// Game state object</span>
+    });
+  }
+  <span class="keyword">return</span> rooms.<span class="function">get</span>(room);
+};
+
+<span class="keyword">export const</span> <span class="function">broadcastToRoom</span> = (room, payload) => {
+  <span class="keyword">const</span> roomObj = rooms.<span class="function">get</span>(room);
+  <span class="keyword">const</span> json = JSON.<span class="function">stringify</span>(payload);
+
+  <span class="comment">// Send to TV</span>
+  <span class="keyword">if</span> (roomObj.<span class="property">table</span>) roomObj.<span class="property">table</span>.<span class="function">send</span>(json);
+
+  <span class="comment">// Send to all phones</span>
+  roomObj.<span class="property">players</span>.<span class="function">forEach</span>(p => p.<span class="property">ws</span>.<span class="function">send</span>(json));
+};
+      </div>
+
+      <div class="info-grid" style="margin-top: 24px;">
+        <div class="info-card">
+          <h4>Socket Cleanup</h4>
+          <p>
+            When a socket closes, it's removed from the room. If both table and all players disconnect,
+            the room is deleted from memory. Reconnecting players are handled gracefully.
+          </p>
+        </div>
+        <div class="info-card">
+          <h4>Game State Reset</h4>
+          <p>
+            When a table rejoins a completed game (victory/defeat), the game state is reset automatically.
+            This allows replaying without server restart.
+          </p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Phone as Controller -->
+  <div class="slide">
+    <section>
+      <h2>Phone as Controller</h2>
+      <p class="section-intro">
+        Each phone runs the controller HTML page in a mobile browser. It connects to the server,
+        receives dealt hands, and sends card plays. The UI is optimized for touch interaction.
+      </p>
+
+      <div class="info-grid">
+        <div class="info-card">
+          <h4>Join Flow</h4>
+          <p>
+            On load, the controller prompts for room code and generates a random player ID.
+            It then opens a WebSocket and sends <code>join_player</code> with deck preferences.
+          </p>
+        </div>
+        <div class="info-card">
+          <h4>Hand Management</h4>
+          <p>
+            Each turn, the server deals 5 cards via <code>hand</code> message.
+            The controller renders them as tappable cards with swipe-to-play gesture support.
+          </p>
+        </div>
+        <div class="info-card">
+          <h4>Play Submission</h4>
+          <p>
+            When a player taps/swipes a card, it sends <code>play_card</code> with the card ID.
+            The UI locks to prevent double-plays until the next turn.
+          </p>
+        </div>
+        <div class="info-card">
+          <h4>State Display</h4>
+          <p>
+            The controller shows party HP, personal HP estimate, turn timer, and last action log.
+            Players see what others play but not their hands (hidden information).
+          </p>
+        </div>
+      </div>
+
+      <div style="margin-top: 40px;">
+        <h3>Client WebSocket Connection</h3>
+        <div class="code-block">
+<span class="comment">// controller/index.html</span>
+<span class="keyword">const</span> wsProtocol = window.<span class="property">location</span>.<span class="property">protocol</span> === <span class="string">'https:'</span> ? <span class="string">'wss:'</span> : <span class="string">'ws:'</span>;
+<span class="keyword">const</span> ws = <span class="keyword">new</span> <span class="function">WebSocket</span>(`<span class="keyword">${</span>wsProtocol<span class="keyword">}</span>//<span class="keyword">${</span>window.<span class="property">location</span>.<span class="property">host</span><span class="keyword">}</span>`);
+
+ws.<span class="property">onopen</span> = () => {
+  ws.<span class="function">send</span>(JSON.<span class="function">stringify</span>({
+    <span class="property">type</span>: <span class="string">"join_player"</span>,
+    <span class="property">room</span>: room,
+    <span class="property">playerId</span>: playerId,
+    <span class="property">deckId</span>: <span class="string">"ember-ward"</span>
+  }));
+};
+
+ws.<span class="property">onmessage</span> = e => {
+  <span class="keyword">const</span> data = JSON.<span class="function">parse</span>(e.<span class="property">data</span>);
+
+  <span class="keyword">if</span> (data.<span class="property">type</span> === <span class="string">"hand"</span>) {
+    state.<span class="property">hand</span> = data.<span class="property">hand</span>;
+    <span class="function">renderHand</span>();
+  }
+};
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- TV as Receiver -->
+  <div class="slide">
+    <section>
+      <h2>TV as Receiver</h2>
+      <p class="section-intro">
+        The receiver is a passive display that shows the shared game state. It renders monster HP,
+        party HP, played cards, action log, and handles victory/defeat overlays.
+      </p>
+
+      <div class="info-grid">
+        <div class="info-card">
+          <h4>Join as Table</h4>
+          <p>
+            On load, the receiver auto-joins room "ABCD" by sending <code>join_table</code>.
+            The server registers it as the room's table socket and sends current state.
+          </p>
+        </div>
+        <div class="info-card">
+          <h4>Battle Controls</h4>
+          <p>
+            The TV shows a "Start Battle" button when players are ready. Pressing Enter continues
+            to the next room after victory. These trigger server commands.
+          </p>
+        </div>
+        <div class="info-card">
+          <h4>Card Display</h4>
+          <p>
+            When players submit cards, they animate into the cards area at the bottom.
+            Boss cards also appear here. Cards fade out after 3 seconds.
+          </p>
+        </div>
+        <div class="info-card">
+          <h4>Visual Feedback</h4>
+          <p>
+            Monster images glow with card-type colors when hits land. Phase banners indicate
+            whose turn it is (player vs monster). HP bars animate smoothly.
+          </p>
+        </div>
+      </div>
+
+      <div style="margin-top: 40px;">
+        <h3>Key Receiver Message Handlers</h3>
+        <div class="code-block">
+ws.<span class="property">onmessage</span> = e => {
+  <span class="keyword">const</span> data = JSON.<span class="function">parse</span>(e.<span class="property">data</span>);
+
+  <span class="keyword">if</span> (data.<span class="property">type</span> === <span class="string">"room_entered"</span>) {
+    <span class="comment">// New monster appeared</span>
+    state.<span class="property">monster</span> = data.<span class="property">monster</span>;
+    <span class="function">loadMonsterImage</span>(data.<span class="property">monster</span>.<span class="property">name</span>);
+  }
+
+  <span class="keyword">if</span> (data.<span class="property">type</span> === <span class="string">"card_action"</span>) {
+    <span class="comment">// Player or boss played a card</span>
+    <span class="function">addPlayedCard</span>(data.<span class="property">playerId</span>, data.<span class="property">cardId</span>);
+    <span class="function">triggerGlowEffect</span>(data.<span class="property">cardId</span>);
+  }
+
+  <span class="keyword">if</span> (data.<span class="property">type</span> === <span class="string">"turn_result"</span>) {
+    <span class="comment">// Update HP bars after resolution</span>
+    state.<span class="property">partyHp</span> = data.<span class="property">partyHp</span>;
+    state.<span class="property">monster</span>.<span class="property">hp</span> = data.<span class="property">monsterHp</span>;
+    <span class="function">renderBars</span>();
+  }
+};
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Message Protocol -->
+  <div class="slide">
+    <section>
+      <h2>Message Protocol</h2>
+      <p class="section-intro">
+        All messages follow a consistent JSON structure with a <code>type</code> field.
+        Clients ignore unknown types for forward compatibility.
+      </p>
+
+      <table class="protocol-table">
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Direction</th>
+            <th>Purpose</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>join_player</code></td>
+            <td>Phone -> Server</td>
+            <td>Register as player in room</td>
+          </tr>
+          <tr>
+            <td><code>join_table</code></td>
+            <td>TV -> Server</td>
+            <td>Register as table display</td>
+          </tr>
+          <tr>
+            <td><code>play_card</code></td>
+            <td>Phone -> Server</td>
+            <td>Submit card selection for turn</td>
+          </tr>
+          <tr>
+            <td><code>hand</code></td>
+            <td>Server -> Phone</td>
+            <td>Deal new hand of 5 cards</td>
+          </tr>
+          <tr>
+            <td><code>turn_start</code></td>
+            <td>Server -> All</td>
+            <td>Begin 10-second turn timer</td>
+          </tr>
+          <tr>
+            <td><code>card_action</code></td>
+            <td>Server -> All</td>
+            <td>Broadcast that a card was played</td>
+          </tr>
+          <tr>
+            <td><code>turn_result</code></td>
+            <td>Server -> All</td>
+            <td>Resolved damage, heals, combos</td>
+          </tr>
+          <tr>
+            <td><code>room_entered</code></td>
+            <td>Server -> All</td>
+            <td>New monster/room started</td>
+          </tr>
+          <tr>
+            <td><code>game_over</code></td>
+            <td>Server -> All</td>
+            <td>Victory or defeat result</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </div>
+
+  <!-- Turn Resolution -->
+  <div class="slide">
+    <section>
+      <h2>Turn Resolution System</h2>
+      <p class="section-intro">
+        The server runs a deterministic resolution loop each turn. All player cards are collected,
+        then effects are calculated in a specific order to ensure consistent outcomes.
+      </p>
+
+      <div class="turn-phases">
+        <div class="phase-box">
+          <div class="phase-name">Deal</div>
+          <div class="phase-time">Hand sent</div>
+        </div>
+        <div class="phase-arrow">-></div>
+        <div class="phase-box active">
+          <div class="phase-name">Play</div>
+          <div class="phase-time">10 seconds</div>
+        </div>
+        <div class="phase-arrow">-></div>
+        <div class="phase-box">
+          <div class="phase-name">Resolve</div>
+          <div class="phase-time">3 seconds</div>
+        </div>
+        <div class="phase-arrow">-></div>
+        <div class="phase-box">
+          <div class="phase-name">Monster</div>
+          <div class="phase-time">5 seconds</div>
+        </div>
+      </div>
+
+      <div style="margin-top: 40px;">
+        <h3>Resolution Order</h3>
+        <div class="code-block">
+<span class="keyword">const</span> <span class="function">resolveTurn</span> = (room, roomObj) => {
+  <span class="keyword">const</span> plays = game.<span class="property">pendingPlays</span>;
+
+  <span class="comment">// 1. Calculate totals from all cards</span>
+  <span class="keyword">let</span> totalAttack = 0, totalDefense = 0, totalHeal = 0;
+  Object.<span class="function">values</span>(plays).<span class="function">forEach</span>(cardId => {
+    <span class="keyword">const</span> effect = CARD_EFFECTS[cardId];
+    <span class="keyword">if</span> (effect.<span class="property">attack</span>) totalAttack += effect.<span class="property">attack</span>;
+    <span class="keyword">if</span> (effect.<span class="property">defense</span>) totalDefense += effect.<span class="property">defense</span>;
+    <span class="keyword">if</span> (effect.<span class="property">heal</span>) totalHeal += effect.<span class="property">heal</span>;
+  });
+
+  <span class="comment">// 2. Check for combos</span>
+  <span class="keyword">if</span> (attackCardCount >= 3) {
+    totalAttack *= 1.5; <span class="comment">// TEAM_STRIKE</span>
+  }
+
+  <span class="comment">// 3. Apply damage to monster</span>
+  game.<span class="property">monster</span>.<span class="property">hp</span> -= totalAttack;
+
+  <span class="comment">// 4. Monster attacks (reduced by defense)</span>
+  <span class="keyword">const</span> damage = Math.<span class="function">max</span>(0, monster.<span class="property">attack</span> - totalDefense);
+  game.<span class="property">partyHp</span> -= damage;
+
+  <span class="comment">// 5. Apply healing</span>
+  game.<span class="property">partyHp</span> = Math.<span class="function">min</span>(100, game.<span class="property">partyHp</span> + totalHeal);
+
+  <span class="comment">// 6. Update rage</span>
+  game.<span class="property">rage</span> += monster.<span class="property">ragePerTurn</span>;
+
+  <span class="comment">// 7. Broadcast result</span>
+  <span class="function">broadcastToRoom</span>(room, { <span class="property">type</span>: <span class="string">"turn_result"</span>, ... });
+};
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Connection Flow -->
+  <div class="slide">
+    <section>
+      <h2>Complete Connection Flow</h2>
+      <p class="section-intro">
+        Here's the full sequence from page load to first turn, showing how all the pieces connect.
+      </p>
+
+      <div class="flow-diagram">
+        <div class="flow-step">
+          <div class="flow-number">1</div>
+          <div class="flow-content">
+            <div class="flow-from">TV</div>
+            <div class="flow-arrow">-></div>
+            <div class="flow-to">Server</div>
+            <div class="flow-message">join_table { room: "ABCD" }</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-number">2</div>
+          <div class="flow-content">
+            <div class="flow-from">Server</div>
+            <div class="flow-arrow">-></div>
+            <div class="flow-to">TV</div>
+            <div class="flow-message">room_state { players: [] }</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-number">3</div>
+          <div class="flow-content">
+            <div class="flow-from">Phone</div>
+            <div class="flow-arrow">-></div>
+            <div class="flow-to">Server</div>
+            <div class="flow-message">join_player { room, playerId, deckId }</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-number">4</div>
+          <div class="flow-content">
+            <div class="flow-from">Server</div>
+            <div class="flow-arrow">-></div>
+            <div class="flow-to">All</div>
+            <div class="flow-message">player_joined { playerId, playerList }</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-number">5</div>
+          <div class="flow-content">
+            <div class="flow-from">TV</div>
+            <div class="flow-arrow">-></div>
+            <div class="flow-to">Server</div>
+            <div class="flow-message">start_battle { room }</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-number">6</div>
+          <div class="flow-content">
+            <div class="flow-from">Server</div>
+            <div class="flow-arrow">-></div>
+            <div class="flow-to">Phones</div>
+            <div class="flow-message">hand { hand: [card1, card2, ...] }</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-number">7</div>
+          <div class="flow-content">
+            <div class="flow-from">Server</div>
+            <div class="flow-arrow">-></div>
+            <div class="flow-to">All</div>
+            <div class="flow-message">turn_start { turnIndex, seconds: 10 }</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Key Design Decisions -->
+  <div class="slide">
+    <section>
+      <h2>Key Design Decisions</h2>
+      <p class="section-intro">
+        Several architectural choices shape how the system works and why it's built this way.
+      </p>
+
+      <div class="info-grid">
+        <div class="info-card">
+          <h4>No Database</h4>
+          <p>
+            Game state lives entirely in memory. Rooms are Map objects, deleted when empty.
+            This simplifies deployment and removes external dependencies, but state is lost on server restart.
+          </p>
+        </div>
+        <div class="info-card">
+          <h4>Same-Host URLs</h4>
+          <p>
+            Clients derive WebSocket URLs from <code>window.location.host</code>.
+            This means phones automatically connect to the right server when on the same LAN.
+          </p>
+        </div>
+        <div class="info-card">
+          <h4>Simultaneous Play</h4>
+          <p>
+            All players submit during the same 10-second window. The server waits for either
+            all submissions or timeout, then resolves once. No sequential turns means no waiting.
+          </p>
+        </div>
+        <div class="info-card">
+          <h4>Hidden Hands</h4>
+          <p>
+            Each phone only receives its own hand. Other players' cards are revealed when played.
+            This creates surprise moments and requires verbal coordination.
+          </p>
+        </div>
+        <div class="info-card">
+          <h4>No App Download</h4>
+          <p>
+            Using browser WebSocket API means phones just need to open a URL.
+            No app store, no installation, no updates. Just scan/type and play.
+          </p>
+        </div>
+        <div class="info-card">
+          <h4>Single Port</h4>
+          <p>
+            HTTP server and WebSocket share port 8080. The server serves static files and upgrades
+            to WebSocket on the same connection. Simplifies firewall and setup.
+          </p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Summary -->
+  <div class="slide">
+    <section>
+      <h2>System Summary</h2>
+      <p class="section-intro">
+        Dungeon Dashers demonstrates how modern web technologies can create compelling
+        multiplayer experiences without complex infrastructure.
+      </p>
+
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-top: 40px;">
+        <div style="background: var(--surface-card); border: 1px solid var(--border-soft); border-radius: 12px; padding: 24px; text-align: center;">
+          <div style="font-size: 2.5rem; font-family: var(--font-display); color: var(--primary-end);">1</div>
+          <div style="font-size: 0.85rem; color: var(--color-muted);">Server Process</div>
+        </div>
+        <div style="background: var(--surface-card); border: 1px solid var(--border-soft); border-radius: 12px; padding: 24px; text-align: center;">
+          <div style="font-size: 2.5rem; font-family: var(--font-display); color: var(--primary-end);">1</div>
+          <div style="font-size: 0.85rem; color: var(--color-muted);">npm Dependency</div>
+        </div>
+        <div style="background: var(--surface-card); border: 1px solid var(--border-soft); border-radius: 12px; padding: 24px; text-align: center;">
+          <div style="font-size: 2.5rem; font-family: var(--font-display); color: var(--primary-end);">~600</div>
+          <div style="font-size: 0.85rem; color: var(--color-muted);">Lines of Server JS</div>
+        </div>
+        <div style="background: var(--surface-card); border: 1px solid var(--border-soft); border-radius: 12px; padding: 24px; text-align: center;">
+          <div style="font-size: 2.5rem; font-family: var(--font-display); color: var(--primary-end);">&lt;10ms</div>
+          <div style="font-size: 0.85rem; color: var(--color-muted);">Message Latency</div>
+        </div>
+      </div>
+
+      <div style="margin-top: 60px; text-align: center; padding: 40px; background: linear-gradient(135deg, rgba(192, 148, 63, 0.1), rgba(246, 213, 139, 0.05)); border: 1px solid var(--border-soft); border-radius: 16px;">
+        <div style="font-family: var(--font-display); font-size: 1.5rem; color: var(--primary-end); margin-bottom: 16px;">
+          WebSockets + Phones + TV = Real-Time Co-op
+        </div>
+        <div style="font-size: 1rem; color: var(--color-muted);">
+          The simplest architecture that could possibly work.
+        </div>
+      </div>
+    </section>
+  </div>
+
+</body>
+</html>

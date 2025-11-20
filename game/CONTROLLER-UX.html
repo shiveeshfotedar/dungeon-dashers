@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dungeon Dashers - Phone as Controller</title>
+  <link rel="stylesheet" href="shared/theme.css">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-snap-type: y mandatory;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      overflow-x: hidden;
+    }
+
+    .slide {
+      min-height: 100vh;
+      padding: 80px 100px;
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      scroll-snap-align: start;
+      position: relative;
+    }
+
+    .slide::after {
+      content: '';
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 4px;
+      background: var(--border-soft);
+      border-radius: 2px;
+    }
+
+    .slide:last-of-type::after {
+      display: none;
+    }
+
+    .section-intro {
+      font-size: 1.1rem;
+      color: var(--color-muted);
+      max-width: 800px;
+      line-height: 1.7;
+      margin-bottom: 16px;
+    }
+
+    .design-header {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .design-header h1 {
+      font-family: var(--font-display);
+      font-size: 4rem;
+      margin: 0 0 24px;
+      background: linear-gradient(120deg, var(--primary-start), var(--primary-end));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .design-header p {
+      font-size: 1.5rem;
+      color: var(--color-muted);
+      margin: 0;
+    }
+
+    .design-header .tagline {
+      font-size: 1.1rem;
+      color: var(--color-muted);
+      opacity: 0.8;
+      margin-top: 16px;
+      max-width: 600px;
+      line-height: 1.6;
+    }
+
+    section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    h2 {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin: 0 0 40px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-soft);
+      flex-shrink: 0;
+    }
+
+    h3 {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--primary-end);
+      margin: 0 0 16px;
+    }
+
+    /* Info Grid */
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      margin-top: 40px;
+    }
+
+    .info-card {
+      background: var(--surface-card);
+      border: 1px solid var(--border-soft);
+      border-radius: 12px;
+      padding: 24px;
+    }
+
+    .info-card h4 {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      color: var(--primary-end);
+      margin: 0 0 12px;
+    }
+
+    .info-card p {
+      font-size: 0.9rem;
+      color: var(--color-muted);
+      margin: 0;
+      line-height: 1.6;
+    }
+
+    /* Phone Mockup */
+    .phone-mockup {
+      width: 280px;
+      height: 560px;
+      background: rgba(0,0,0,0.6);
+      border: 3px solid var(--border-muted);
+      border-radius: 36px;
+      padding: 16px;
+      position: relative;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+
+    .phone-notch {
+      width: 120px;
+      height: 24px;
+      background: #000;
+      border-radius: 0 0 12px 12px;
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .phone-screen {
+      width: 100%;
+      height: 100%;
+      background: var(--gradient-bg);
+      border-radius: 24px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .phone-home {
+      width: 100px;
+      height: 5px;
+      background: var(--border-soft);
+      border-radius: 3px;
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    /* Comparison Grid */
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      margin-top: 40px;
+    }
+
+    .comparison-col {
+      background: var(--surface-card);
+      border: 1px solid var(--border-soft);
+      border-radius: 16px;
+      padding: 32px;
+    }
+
+    .comparison-col.highlight {
+      border-color: var(--primary-start);
+      box-shadow: 0 0 30px rgba(192, 148, 63, 0.2);
+    }
+
+    .comparison-title {
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .comparison-col.highlight .comparison-title {
+      color: var(--primary-end);
+    }
+
+    .comparison-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .comparison-list li {
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border-soft);
+      font-size: 0.9rem;
+      color: var(--color-muted);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .comparison-list li:last-child {
+      border-bottom: none;
+    }
+
+    .comparison-icon {
+      font-size: 1.2rem;
+    }
+
+    /* Gesture Visual */
+    .gesture-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-top: 40px;
+    }
+
+    .gesture-card {
+      background: var(--surface-card);
+      border: 1px solid var(--border-soft);
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .gesture-visual {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 16px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+    }
+
+    .gesture-name {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      color: var(--primary-end);
+      margin-bottom: 8px;
+    }
+
+    .gesture-action {
+      font-size: 0.85rem;
+      color: var(--color-muted);
+    }
+
+    /* Card States */
+    .card-states {
+      display: flex;
+      gap: 24px;
+      justify-content: center;
+      margin-top: 40px;
+      flex-wrap: wrap;
+    }
+
+    .card-state-item {
+      text-align: center;
+    }
+
+    .card-state-visual {
+      width: 100px;
+      height: 140px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      color: var(--color-muted);
+      transition: all 300ms ease;
+    }
+
+    .card-state-visual.default {
+      background: linear-gradient(160deg, var(--card-attack-bg-start), var(--card-attack-bg-end));
+      border: 2px solid var(--card-attack-border);
+      transform: scale(0.9);
+      opacity: 0.7;
+    }
+
+    .card-state-visual.focused {
+      background: linear-gradient(160deg, var(--card-attack-bg-start), var(--card-attack-bg-end));
+      border: 3px solid var(--card-attack-accent);
+      transform: scale(1.05);
+      box-shadow: 0 8px 30px rgba(199, 67, 67, 0.5);
+    }
+
+    .card-state-visual.playing {
+      background: linear-gradient(160deg, var(--card-attack-bg-start), var(--card-attack-bg-end));
+      border: 2px solid var(--card-attack-border);
+      transform: translateY(-20px) scale(0.95);
+      opacity: 0.5;
+    }
+
+    .card-state-visual.spent {
+      background: rgba(0,0,0,0.3);
+      border: 2px dashed var(--border-soft);
+      opacity: 0.3;
+    }
+
+    .card-state-label {
+      font-size: 0.8rem;
+      color: var(--color-muted);
+    }
+
+    /* Benefits Grid */
+    .benefits-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-top: 40px;
+    }
+
+    .benefit-card {
+      background: var(--surface-card);
+      border: 1px solid var(--border-soft);
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .benefit-icon {
+      font-size: 2.5rem;
+      margin-bottom: 16px;
+    }
+
+    .benefit-title {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      color: var(--primary-end);
+      margin-bottom: 8px;
+    }
+
+    .benefit-desc {
+      font-size: 0.85rem;
+      color: var(--color-muted);
+      line-height: 1.5;
+    }
+
+    /* Hand Layout Visual */
+    .hand-visual {
+      background: var(--surface-card);
+      border: 1px solid var(--border-soft);
+      border-radius: 16px;
+      padding: 32px;
+      margin-top: 40px;
+    }
+
+    .hand-scroll {
+      display: flex;
+      gap: 16px;
+      overflow-x: auto;
+      padding: 20px 0;
+    }
+
+    .hand-card {
+      flex: 0 0 120px;
+      height: 170px;
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .hand-card.attack {
+      background: linear-gradient(160deg, var(--card-attack-bg-start), var(--card-attack-bg-end));
+      border: 2px solid var(--card-attack-border);
+    }
+
+    .hand-card.defense {
+      background: linear-gradient(160deg, var(--card-defense-bg-start), var(--card-defense-bg-end));
+      border: 2px solid var(--card-defense-border);
+    }
+
+    .hand-card.skill {
+      background: linear-gradient(160deg, var(--card-skill-bg-start), var(--card-skill-bg-end));
+      border: 2px solid var(--card-skill-border);
+    }
+
+    .hand-card.utility {
+      background: linear-gradient(160deg, var(--card-utility-bg-start), var(--card-utility-bg-end));
+      border: 2px solid var(--card-utility-border);
+    }
+
+    .hand-card-name {
+      font-family: var(--font-display);
+      font-size: 0.75rem;
+      text-align: center;
+    }
+
+    .hand-card.attack .hand-card-name { color: var(--card-attack-accent); }
+    .hand-card.defense .hand-card-name { color: var(--card-defense-accent); }
+    .hand-card.skill .hand-card-name { color: var(--card-skill-accent); }
+    .hand-card.utility .hand-card-name { color: var(--card-utility-accent); }
+
+    .hand-card-art {
+      flex: 1;
+      background: rgba(0,0,0,0.3);
+      border-radius: 6px;
+    }
+
+    .hand-card-btn {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 6px;
+      padding: 6px;
+      font-size: 0.65rem;
+      color: var(--color-text);
+      text-align: center;
+    }
+
+    /* Flow Diagram */
+    .input-flow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      margin: 40px 0;
+      flex-wrap: wrap;
+    }
+
+    .flow-box {
+      background: var(--surface-card);
+      border: 1px solid var(--border-soft);
+      border-radius: 12px;
+      padding: 16px 24px;
+      text-align: center;
+    }
+
+    .flow-box.highlight {
+      border-color: var(--primary-start);
+      box-shadow: 0 0 20px rgba(192, 148, 63, 0.3);
+    }
+
+    .flow-label {
+      font-family: var(--font-display);
+      font-size: 0.9rem;
+      color: var(--primary-end);
+      margin-bottom: 4px;
+    }
+
+    .flow-detail {
+      font-size: 0.75rem;
+      color: var(--color-muted);
+    }
+
+    .flow-arrow {
+      color: var(--primary-start);
+      font-size: 1.5rem;
+    }
+
+    /* Two Column Layout */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+      margin-top: 40px;
+    }
+
+    /* Deck Builder Section */
+    .deck-features {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      margin-top: 40px;
+    }
+
+    .deck-feature {
+      background: var(--surface-card);
+      border: 1px solid var(--border-soft);
+      border-radius: 12px;
+      padding: 24px;
+    }
+
+    .deck-feature h4 {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      color: var(--primary-end);
+      margin: 0 0 12px;
+    }
+
+    .deck-feature p {
+      font-size: 0.9rem;
+      color: var(--color-muted);
+      margin: 0;
+      line-height: 1.6;
+    }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .slide {
+        padding: 60px 40px;
+      }
+
+      .info-grid,
+      .comparison-grid,
+      .benefits-grid,
+      .deck-features,
+      .two-col {
+        grid-template-columns: 1fr;
+      }
+
+      .gesture-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .slide {
+        padding: 40px 20px;
+      }
+
+      .design-header h1 {
+        font-size: 2.5rem;
+      }
+
+      .gesture-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .card-states {
+        flex-direction: column;
+        align-items: center;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Title Slide -->
+  <div class="slide">
+    <header class="design-header">
+      <h1>Phone as Controller</h1>
+      <p>Custom Input Design</p>
+      <div class="tagline">
+        Leveraging touchscreens to create a card-based input system that transforms
+        every smartphone into a personalized game controller.
+      </div>
+      <div style="margin-top: 60px; display: flex; gap: 24px;">
+        <div style="width: 12px; height: 12px; border-radius: 50%; background: var(--card-attack-border);"></div>
+        <div style="width: 12px; height: 12px; border-radius: 50%; background: var(--card-defense-border);"></div>
+        <div style="width: 12px; height: 12px; border-radius: 50%; background: var(--card-skill-border);"></div>
+        <div style="width: 12px; height: 12px; border-radius: 50%; background: var(--card-utility-border);"></div>
+      </div>
+    </header>
+  </div>
+
+  <!-- The Concept -->
+  <div class="slide">
+    <section>
+      <h2>The Concept</h2>
+      <p class="section-intro">
+        Traditional controllers are fixed hardware with predetermined buttons. A phone's touchscreen
+        is a blank canvas. We can design any interface we want - and for a card game, we design
+        the interface to BE the cards themselves.
+      </p>
+
+      <div class="input-flow">
+        <div class="flow-box">
+          <div class="flow-label">Traditional</div>
+          <div class="flow-detail">Fixed buttons</div>
+        </div>
+        <div class="flow-arrow">vs</div>
+        <div class="flow-box highlight">
+          <div class="flow-label">Phone</div>
+          <div class="flow-detail">Dynamic UI</div>
+        </div>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-card">
+          <h4>The Input IS the Content</h4>
+          <p>
+            Instead of pressing "A" to play a card, you tap the actual card. The input mechanism
+            and the game content are unified. This creates direct manipulation - what you see
+            is what you interact with.
+          </p>
+        </div>
+        <div class="info-card">
+          <h4>Context-Sensitive Interface</h4>
+          <p>
+            The controller changes based on game state. During your turn, you see your hand.
+            Between turns, you see results. The interface always shows exactly what's relevant.
+          </p>
+        </div>
+        <div class="info-card">
+          <h4>Rich Visual Feedback</h4>
+          <p>
+            Cards glow, animate, and respond to touch. Color-coded types (attack/defense/skill/utility)
+            provide instant recognition. Stats are visible without memorization.
+          </p>
+        </div>
+        <div class="info-card">
+          <h4>Private Information</h4>
+          <p>
+            Your hand is only on your screen. Other players can't see your cards until you play them.
+            This enables strategy, bluffing, and the joy of surprise when plays are revealed.
+          </p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Why Not Traditional Controllers -->
+  <div class="slide">
+    <section>
+      <h2>Phone vs Traditional Controller</h2>
+      <p class="section-intro">
+        Phones offer unique advantages over traditional controllers for social party games,
+        especially those involving hidden information and complex inputs.
+      </p>
+
+      <div class="comparison-grid">
+        <div class="comparison-col">
+          <div class="comparison-title">Traditional Controller</div>
+          <ul class="comparison-list">
+            <li><span class="comparison-icon">X</span> Need to buy/own controllers</li>
+            <li><span class="comparison-icon">X</span> Limited number (usually 4)</li>
+            <li><span class="comparison-icon">X</span> Fixed button layout</li>
+            <li><span class="comparison-icon">X</span> No private screens</li>
+            <li><span class="comparison-icon">X</span> Abstract button mapping</li>
+            <li><span class="comparison-icon">X</span> Learning curve for controls</li>
+          </ul>
+        </div>
+        <div class="comparison-col highlight">
+          <div class="comparison-title">Phone as Controller</div>
+          <ul class="comparison-list">
+            <li><span class="comparison-icon">OK</span> Everyone already has one</li>
+            <li><span class="comparison-icon">OK</span> Unlimited players can join</li>
+            <li><span class="comparison-icon">OK</span> Custom UI per game</li>
+            <li><span class="comparison-icon">OK</span> Private screen per player</li>
+            <li><span class="comparison-icon">OK</span> Direct card interaction</li>
+            <li><span class="comparison-icon">OK</span> Intuitive touch gestures</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Touch Gestures -->
+  <div class="slide">
+    <section>
+      <h2>Touch Gesture Design</h2>
+      <p class="section-intro">
+        We leverage familiar mobile gestures to create an intuitive card interaction system.
+        Each gesture has clear purpose and visual feedback.
+      </p>
+
+      <div class="gesture-grid">
+        <div class="gesture-card">
+          <div class="gesture-visual">TAP</div>
+          <div class="gesture-name">Tap Card</div>
+          <div class="gesture-action">Focus the card. Enlarges it and shows details. Required before playing.</div>
+        </div>
+        <div class="gesture-card">
+          <div class="gesture-visual">TAP</div>
+          <div class="gesture-name">Tap Play Button</div>
+          <div class="gesture-action">Confirm selection. Sends the focused card to battle.</div>
+        </div>
+        <div class="gesture-card">
+          <div class="gesture-visual">SWIPE</div>
+          <div class="gesture-name">Horizontal Scroll</div>
+          <div class="gesture-action">Browse your hand. Native mobile pattern for exploring content.</div>
+        </div>
+      </div>
+
+      <div style="margin-top: 40px; padding: 24px; background: var(--surface-card); border: 1px solid var(--border-soft); border-radius: 12px;">
+        <h3 style="margin-top: 0;">Design Principle: Two-Step Confirmation</h3>
+        <p style="font-size: 0.9rem; color: var(--color-muted); margin: 0; line-height: 1.6;">
+          Playing a card requires two taps: focus then play. This prevents accidental plays on a touchscreen
+          where mis-taps are common. The focused state gives you a chance to see the card details and confirm
+          your choice before committing.
+        </p>
+      </div>
+    </section>
+  </div>
+
+  <!-- Card States -->
+  <div class="slide">
+    <section>
+      <h2>Card Visual States</h2>
+      <p class="section-intro">
+        Cards transition through distinct visual states to communicate their status.
+        This feedback loop helps players understand what's happening without text explanations.
+      </p>
+
+      <div class="card-states">
+        <div class="card-state-item">
+          <div class="card-state-visual default">In Hand</div>
+          <div class="card-state-label">Default</div>
+        </div>
+        <div class="card-state-item">
+          <div class="card-state-visual focused">Selected</div>
+          <div class="card-state-label">Focused</div>
+        </div>
+        <div class="card-state-item">
+          <div class="card-state-visual playing">Animating</div>
+          <div class="card-state-label">Playing</div>
+        </div>
+        <div class="card-state-item">
+          <div class="card-state-visual spent">Gone</div>
+          <div class="card-state-label">Spent</div>
+        </div>
+      </div>
+
+      <div class="info-grid" style="margin-top: 40px;">
+        <div class="info-card">
+          <h4>Default State</h4>
+          <p>
+            Cards sit slightly scaled down in the hand. Readable but not prominent.
+            Encourages scanning and selection rather than immediate action.
+          </p>
+        </div>
+        <div class="info-card">
+          <h4>Focused State</h4>
+          <p>
+            Selected card scales up with enhanced glow and brighter border. Play button appears.
+            Clear visual distinction from siblings. Only one card focused at a time.
+          </p>
+        </div>
+        <div class="info-card">
+          <h4>Playing Animation</h4>
+          <p>
+            Card slides upward and fades as it's "thrown" into battle.
+            Provides satisfying feedback that the action registered.
+          </p>
+        </div>
+        <div class="info-card">
+          <h4>Spent State</h4>
+          <p>
+            Card slot becomes empty/grayed. Visual confirmation that you've played this turn.
+            Prevents confusion about whether your play was submitted.
+          </p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- The Hand UI -->
+  <div class="slide">
+    <section>
+      <h2>Hand Layout Design</h2>
+      <p class="section-intro">
+        The hand UI uses horizontal scrolling to display 5 cards on a portrait phone screen.
+        This pattern is familiar from photo galleries and card game apps.
+      </p>
+
+      <div class="hand-visual">
+        <div style="font-size: 0.8rem; color: var(--color-muted); margin-bottom: 12px;">
+          Horizontal scroll - swipe to see all cards
+        </div>
+        <div class="hand-scroll">
+          <div class="hand-card attack">
+            <div class="hand-card-name">Strike</div>
+            <div class="hand-card-art"></div>
+            <div class="hand-card-btn">Play</div>
+          </div>
+          <div class="hand-card defense">
+            <div class="hand-card-name">Shield</div>
+            <div class="hand-card-art"></div>
+            <div class="hand-card-btn">Play</div>
+          </div>
+          <div class="hand-card skill">
+            <div class="hand-card-name">Heal</div>
+            <div class="hand-card-art"></div>
+            <div class="hand-card-btn">Play</div>
+          </div>
+          <div class="hand-card utility">
+            <div class="hand-card-name">Freeze</div>
+            <div class="hand-card-art"></div>
+            <div class="hand-card-btn">Play</div>
+          </div>
+          <div class="hand-card attack">
+            <div class="hand-card-name">Firebolt</div>
+            <div class="hand-card-art"></div>
+            <div class="hand-card-btn">Play</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-card">
+          <h4>Color-Coded Types</h4>
+          <p>
+            Red = Attack, Blue = Defense, Green = Skill, Purple = Utility.
+            Instant recognition without reading. Players learn the colors in one game.
+          </p>
+        </div>
+        <div class="info-card">
+          <h4>Card Anatomy</h4>
+          <p>
+            Each card shows: name, art frame, type badge, stat values, and play button.
+            All information visible at a glance during the 10-second turn timer.
+          </p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Input as Game Mechanic -->
+  <div class="slide">
+    <section>
+      <h2>Input as Game Mechanic</h2>
+      <p class="section-intro">
+        The card-based input isn't just a control scheme - it's the core game mechanic.
+        What you interact with IS the gameplay. This fusion creates elegant design.
+      </p>
+
+      <div class="input-flow">
+        <div class="flow-box">
+          <div class="flow-label">See Hand</div>
+          <div class="flow-detail">5 random cards</div>
+        </div>
+        <div class="flow-arrow">-></div>
+        <div class="flow-box">
+          <div class="flow-label">Evaluate</div>
+          <div class="flow-detail">Stats + combos</div>
+        </div>
+        <div class="flow-arrow">-></div>
+        <div class="flow-box">
+          <div class="flow-label">Coordinate</div>
+          <div class="flow-detail">Talk to team</div>
+        </div>
+        <div class="flow-arrow">-></div>
+        <div class="flow-box highlight">
+          <div class="flow-label">Tap Card</div>
+          <div class="flow-detail">Submit play</div>
+        </div>
+      </div>
+
+      <div class="info-grid" style="margin-top: 40px;">
+        <div class="info-card">
+          <h4>No Button Mapping</h4>
+          <p>
+            Traditional games: "Press X to attack." Here: Tap the attack card.
+            The action is self-describing. New players understand instantly.
+          </p>
+        </div>
+        <div class="info-card">
+          <h4>Visual Strategy</h4>
+          <p>
+            You can see your options. Comparing card stats is visual, not mental.
+            Decision-making happens by looking, not remembering button combos.
+          </p>
+        </div>
+        <div class="info-card">
+          <h4>Emergent Communication</h4>
+          <p>
+            "I have two attacks!" Players naturally share card information verbally.
+            The hidden hand creates conversation and collaboration.
+          </p>
+        </div>
+        <div class="info-card">
+          <h4>Satisfying Feedback</h4>
+          <p>
+            Tapping a beautifully rendered card that animates away is more satisfying
+            than pressing a generic button. The input feels like casting a spell.
+          </p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Deck Building -->
+  <div class="slide">
+    <section>
+      <h2>Deck Building as Personalization</h2>
+      <p class="section-intro">
+        The controller includes a deck builder that lets players customize their card pool.
+        This extends the input design - you're not just choosing what to play, but curating
+        what options you'll have.
+      </p>
+
+      <div class="deck-features">
+        <div class="deck-feature">
+          <h4>Premade Decks</h4>
+          <p>
+            New players can select from preset decks like "ember-ward" or "wind-surge".
+            These are balanced starting points that teach card synergies through play.
+          </p>
+        </div>
+        <div class="deck-feature">
+          <h4>Custom Deck Building</h4>
+          <p>
+            Experienced players can build custom decks by specifying card IDs.
+            The deck is validated server-side (min 10, max 40, max 3 copies per card).
+          </p>
+        </div>
+        <div class="deck-feature">
+          <h4>Local Storage</h4>
+          <p>
+            Decks are saved to the phone's localStorage. Your custom deck persists
+            across sessions without creating an account.
+          </p>
+        </div>
+        <div class="deck-feature">
+          <h4>Reward Integration</h4>
+          <p>
+            Defeating monsters earns reward cards that are added to your deck for
+            subsequent battles. Your deck grows as you progress.
+          </p>
+        </div>
+      </div>
+
+      <div style="margin-top: 40px; padding: 24px; background: var(--surface-card); border: 1px solid var(--border-soft); border-radius: 12px;">
+        <h3 style="margin-top: 0;">Why This Matters</h3>
+        <p style="font-size: 0.9rem; color: var(--color-muted); margin: 0; line-height: 1.6;">
+          Deck building transforms input personalization from cosmetic (controller skins) to strategic.
+          Your deck reflects your playstyle. Heavy attackers build damage. Support players stack heals.
+          The controller becomes an expression of player identity.
+        </p>
+      </div>
+    </section>
+  </div>
+
+  <!-- Benefits Summary -->
+  <div class="slide">
+    <section>
+      <h2>UX Benefits</h2>
+      <p class="section-intro">
+        Using phones as card-based controllers creates multiple user experience advantages
+        that wouldn't be possible with traditional input methods.
+      </p>
+
+      <div class="benefits-grid">
+        <div class="benefit-card">
+          <div class="benefit-icon">0</div>
+          <div class="benefit-title">Zero Learning Curve</div>
+          <div class="benefit-desc">
+            If you can tap a phone screen, you can play.
+            No button memorization. No tutorial needed.
+          </div>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-icon">Eye</div>
+          <div class="benefit-title">Hidden Information</div>
+          <div class="benefit-desc">
+            Private screens enable secrets, surprises,
+            and the joy of reveal when cards are played.
+          </div>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-icon">INF</div>
+          <div class="benefit-title">Unlimited Players</div>
+          <div class="benefit-desc">
+            No controller limit. Anyone with a phone
+            can join. Scales to party size.
+          </div>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-icon">URL</div>
+          <div class="benefit-title">Instant Access</div>
+          <div class="benefit-desc">
+            No app download. Open a URL and play.
+            Reduces friction to near zero.
+          </div>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-icon">Art</div>
+          <div class="benefit-title">Rich Visuals</div>
+          <div class="benefit-desc">
+            Full-color cards with art, stats, effects.
+            The input is beautiful, not utilitarian.
+          </div>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-icon">User</div>
+          <div class="benefit-title">Personal Device</div>
+          <div class="benefit-desc">
+            Players use their own phone. Familiar device,
+            comfortable grip, no sharing germs.
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Social Dynamics -->
+  <div class="slide">
+    <section>
+      <h2>Social Dynamics</h2>
+      <p class="section-intro">
+        The phone controller design creates unique social interactions that emerge
+        from the combination of private screens and shared display.
+      </p>
+
+      <div class="info-grid">
+        <div class="info-card">
+          <h4>"I've Got Healing!"</h4>
+          <p>
+            Players naturally announce what they have. "I can attack twice!"
+            "Someone needs to defend!" The hidden hand creates conversation.
+          </p>
+        </div>
+        <div class="info-card">
+          <h4>The Reveal Moment</h4>
+          <p>
+            When all cards are played, they appear on the TV simultaneously.
+            "Yes! Team Strike!" The group reacts together to the combined plays.
+          </p>
+        </div>
+        <div class="info-card">
+          <h4>Trust & Coordination</h4>
+          <p>
+            "I'll heal, you all attack." Players must trust each other to follow through.
+            This builds social bonds through cooperative commitment.
+          </p>
+        </div>
+        <div class="info-card">
+          <h4>Shared Tension</h4>
+          <p>
+            Everyone watches the same TV but holds different cards. The 10-second timer
+            creates shared urgency as players coordinate in real-time.
+          </p>
+        </div>
+      </div>
+
+      <div style="margin-top: 40px; text-align: center; padding: 40px; background: linear-gradient(135deg, rgba(192, 148, 63, 0.1), rgba(246, 213, 139, 0.05)); border: 1px solid var(--border-soft); border-radius: 16px;">
+        <div style="font-family: var(--font-display); font-size: 1.3rem; color: var(--primary-end); margin-bottom: 16px;">
+          The phone doesn't replace human interaction - it enables it.
+        </div>
+        <div style="font-size: 1rem; color: var(--color-muted);">
+          Private screens + shared display = rich social gameplay.
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Summary -->
+  <div class="slide">
+    <section>
+      <h2>Design Summary</h2>
+      <p class="section-intro">
+        By treating the phone as a canvas rather than a controller, we created an input
+        system where the interface IS the game content.
+      </p>
+
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-top: 40px;">
+        <div style="background: var(--surface-card); border: 1px solid var(--border-soft); border-radius: 12px; padding: 24px; text-align: center;">
+          <div style="font-size: 2.5rem; font-family: var(--font-display); color: var(--primary-end);">Card</div>
+          <div style="font-size: 0.85rem; color: var(--color-muted);">Input = Content</div>
+        </div>
+        <div style="background: var(--surface-card); border: 1px solid var(--border-soft); border-radius: 12px; padding: 24px; text-align: center;">
+          <div style="font-size: 2.5rem; font-family: var(--font-display); color: var(--primary-end);">Tap</div>
+          <div style="font-size: 0.85rem; color: var(--color-muted);">Simple Gesture</div>
+        </div>
+        <div style="background: var(--surface-card); border: 1px solid var(--border-soft); border-radius: 12px; padding: 24px; text-align: center;">
+          <div style="font-size: 2.5rem; font-family: var(--font-display); color: var(--primary-end);">Hide</div>
+          <div style="font-size: 0.85rem; color: var(--color-muted);">Private Screen</div>
+        </div>
+        <div style="background: var(--surface-card); border: 1px solid var(--border-soft); border-radius: 12px; padding: 24px; text-align: center;">
+          <div style="font-size: 2.5rem; font-family: var(--font-display); color: var(--primary-end);">Deck</div>
+          <div style="font-size: 0.85rem; color: var(--color-muted);">Personalization</div>
+        </div>
+      </div>
+
+      <div style="margin-top: 60px; text-align: center; padding: 40px; background: linear-gradient(135deg, rgba(192, 148, 63, 0.1), rgba(246, 213, 139, 0.05)); border: 1px solid var(--border-soft); border-radius: 16px;">
+        <div style="font-family: var(--font-display); font-size: 1.5rem; color: var(--primary-end); margin-bottom: 16px;">
+          Your Phone. Your Cards. Your Strategy.
+        </div>
+        <div style="font-size: 1rem; color: var(--color-muted);">
+          The touchscreen makes every player's controller unique.
+        </div>
+      </div>
+    </section>
+  </div>
+
+</body>
+</html>
